@@ -9,7 +9,7 @@
  * `body` markdown benzeri düz metindir; harici lib olmadan basit bloklara ayrılır.
  */
 
-import { supabase } from "./supabase";
+import { getSupabase } from "./supabase";
 
 export type ArticleBlock =
   | { type: "p"; text: string }
@@ -162,6 +162,7 @@ function toArticle(row: ArticleRow, featured = false): Article {
  */
 export async function fetchArticles(): Promise<Article[]> {
   try {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("articles")
       .select(ARTICLE_COLUMNS)
@@ -179,6 +180,7 @@ export async function fetchArticles(): Promise<Article[]> {
 /** Tek makale (slug). Yayınlanmamışsa/yoksa null. */
 export async function fetchArticle(slug: string): Promise<Article | null> {
   try {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("articles")
       .select(ARTICLE_COLUMNS)
@@ -207,6 +209,7 @@ export async function fetchBlogList(): Promise<{
 /** generateStaticParams için yayınlanmış slug listesi. */
 export async function fetchArticleSlugs(): Promise<string[]> {
   try {
+    const supabase = getSupabase();
     const { data, error } = await supabase
       .from("articles")
       .select("slug")
