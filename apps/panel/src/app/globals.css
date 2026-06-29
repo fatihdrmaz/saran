@@ -1,0 +1,140 @@
+:root {
+  /* Yeşil omurga */
+  --primary: #0e7a63;
+  --primary-dark: #0e3b31;
+  --primary-mid: #1fa37a;
+  --teal-light: #7fd8c4;
+
+  /* Yüzeyler */
+  --surface-green: #e3f0eb;
+  --surface-green-alt: #e8f6ee;
+  --bg-cream: #f5f1e9;
+  --surface: #f8f6f0;
+  --surface-alt: #f2efe6;
+  --card-border: #ece7db;
+
+  /* Metin */
+  --text-heading: #18302a;
+  --text-body: #33423d;
+  --text-body-alt: #4a5c56;
+  --text-muted: #5e726b;
+  --text-muted-alt: #9aa8a2;
+
+  /* Vurgular / durumlar */
+  --warm: #d98456;
+  --warning-text: #c07a2e;
+  --warning-bg: #fdebd8;
+  --danger: #c2553b;
+  --danger-alt: #d9534f;
+  --danger-bg: #fbe3e2;
+  --danger-bg-alt: #fbf1ee;
+  --star: #e0a33b;
+  --star-bg: #fbf1dd;
+  --star-text: #b07d1e;
+  --success-text: #1fa37a;
+  --success-bg: #e3f4ec;
+
+  /* Şekil */
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 24px 50px -28px rgba(14, 122, 99, 0.4);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg-cream);
+  color: var(--text-body);
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif {
+  font-family: var(--font-heading), Georgia, serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+  font-size: 14px;
+}
+
+/* Yara fotoğrafı mahremiyet bloğu (README §5) */
+.wound-blur {
+  position: relative;
+  overflow: hidden;
+  background: repeating-linear-gradient(
+    45deg,
+    #c9c4bb,
+    #c9c4bb 14px,
+    #bcb7ad 14px,
+    #bcb7ad 28px
+  );
+  filter: blur(1px);
+}
+.wound-lock {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(30, 40, 36, 0.28);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* Responsive: sidebar mobilde üstte yatay kayar */
+@media (max-width: 880px) {
+  .panel-shell {
+    flex-direction: column !important;
+  }
+  .panel-sidebar {
+    width: 100% !important;
+    min-height: auto !important;
+    position: static !important;
+    height: auto !important;
+  }
+  .panel-sidebar nav {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+  }
+  .panel-main {
+    padding: 20px !important;
+  }
+  .grid-cols-4,
+  .grid-cols-3,
+  .grid-cols-2 {
+    grid-template-columns: 1fr !important;
+  }
+  .split-2col {
+    grid-template-columns: 1fr !important;
+  }
+}

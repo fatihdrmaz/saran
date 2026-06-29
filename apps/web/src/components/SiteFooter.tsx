@@ -1,0 +1,116 @@
+import Link from "next/link";
+import { HeartLeaf } from "./Icons";
+
+/** Footer — README §6B (yasal + keşfet linkleri), §11 yasal vurgusu. */
+export function SiteFooter() {
+  const linkStyle = {
+    textDecoration: "none",
+    color: "#a7c9bf",
+    fontSize: 14,
+  } as const;
+
+  return (
+    <footer style={{ background: "var(--primary-dark)", color: "#a7c9bf" }}>
+      <div
+        className="container"
+        style={{ padding: "44px 24px 28px" }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 32,
+          }}
+        >
+          <div style={{ maxWidth: 280 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 9,
+                marginBottom: 12,
+              }}
+            >
+              <span
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 9,
+                  background: "var(--primary-mid)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <HeartLeaf size={16} />
+              </span>
+              <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>
+                Saran
+              </span>
+            </div>
+            <p style={{ fontSize: 13, lineHeight: 1.6 }}>
+              Uzaktan yara bakımı ve takibi. Saran bir uzaktan takip hizmetidir;
+              acil tıbbi yardımın yerini tutmaz.
+            </p>
+          </div>
+
+          <nav style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 800,
+                color: "var(--teal-light)",
+                marginBottom: 4,
+              }}
+            >
+              Yasal
+            </div>
+            <Link href="/kvkk" style={linkStyle}>
+              KVKK & Gizlilik
+            </Link>
+            <Link href="/kosullar" style={linkStyle}>
+              Kullanım Koşulları
+            </Link>
+            <Link href="/kvkk#cerez" style={linkStyle}>
+              Çerez Politikası
+            </Link>
+          </nav>
+
+          <nav style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+            <div
+              style={{
+                fontSize: 13,
+                fontWeight: 800,
+                color: "var(--teal-light)",
+                marginBottom: 4,
+              }}
+            >
+              Keşfet
+            </div>
+            <Link href="/blog" style={linkStyle}>
+              Blog
+            </Link>
+            <Link href="/degerlendirme" style={linkStyle}>
+              Ücretsiz değerlendirme
+            </Link>
+            <Link href="/#sss" style={linkStyle}>
+              S.S.S.
+            </Link>
+          </nav>
+        </div>
+
+        <div
+          style={{
+            borderTop: "1px solid #1c5e50",
+            marginTop: 28,
+            paddingTop: 18,
+            fontSize: 12,
+          }}
+        >
+          © 2026 Saran · Tüm hakları saklıdır.
+        </div>
+      </div>
+    </footer>
+  );
+}

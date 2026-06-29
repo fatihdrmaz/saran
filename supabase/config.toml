@@ -1,0 +1,32 @@
+# Saran — Supabase yerel geliştirme yapılandırması
+# Üretimde proje AB (Frankfurt) bölgesinde açılmalı (KVKK / veri ikametgâhı).
+project_id = "saran"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[studio]
+enabled = true
+port = 54323
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:3000"
+# Hasta kaydı: e-posta + telefon. KVKK onayı uygulama tarafında zorlanır.
+enable_signup = true
+[auth.email]
+enable_confirmations = false
+
+[storage]
+enabled = true
+# Yara fotoğrafları private bucket'ta; yalnızca atanmış hemşire imzalı URL alır.
+file_size_limit = "10MiB"

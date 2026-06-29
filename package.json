@@ -1,0 +1,25 @@
+{
+  "name": "saran",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Saran — Uzaktan Yara Bakım Takip Platformu (monorepo)",
+  "packageManager": "pnpm@10.22.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "mobile": "pnpm --filter @saran/mobile dev",
+    "web": "pnpm --filter @saran/web dev",
+    "panel": "pnpm --filter @saran/panel dev",
+    "db:types": "supabase gen types typescript --local > packages/supabase/src/database.types.ts"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "~6.0.3"
+  }
+}

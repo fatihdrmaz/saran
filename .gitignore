@@ -1,0 +1,32 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+build/
+.next/
+.turbo/
+.expo/
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# supabase
+supabase/.branches/
+supabase/.temp/
+
+# os / editor
+.DS_Store
+*.log
+npm-debug.log*
+
+# tasarım teslim zip'i (design_handoff_saran/ ile aynı içerik)
+*.zip
+
+# native
+apps/mobile/ios/
+apps/mobile/android/

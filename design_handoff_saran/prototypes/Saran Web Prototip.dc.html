@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: auto; }
+  body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; background:#D7D2C6; }
+  .page { animation: slidein .3s ease both; }
+  @keyframes slidein { from { transform:translateY(6px);} to { transform:none;} }
+  .pscroll::-webkit-scrollbar { width:10px; }
+  .pscroll::-webkit-scrollbar-thumb { background:#C3BCA9; border-radius:99px; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:28px; gap:16px;">
+  <!-- browser window -->
+  <div style="width:1180px; max-width:96vw; background:#2A2622; border-radius:14px; box-shadow:0 30px 80px -24px rgba(0,0,0,.5); overflow:hidden;">
+    <!-- chrome -->
+    <div style="display:flex; align-items:center; gap:14px; padding:12px 16px 0;">
+      <div style="display:flex; gap:8px;"><span style="width:12px; height:12px; border-radius:50%; background:#ED6A5E;"></span><span style="width:12px; height:12px; border-radius:50%; background:#F4BF4F;"></span><span style="width:12px; height:12px; border-radius:50%; background:#61C554;"></span></div>
+      <div style="display:flex; align-items:center; gap:8px; background:#3A352F; border-radius:9px 9px 0 0; padding:9px 16px; margin-bottom:-1px;"><div style="width:15px; height:15px; border-radius:5px; background:#0E7A63; display:flex; align-items:center; justify-content:center;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none"><path d="M12 21C12 21 4 14.5 4 9.2C4 6.3 6.2 4 9 4C10.5 4 11.6 4.8 12 5.6C12.4 4.8 13.5 4 15 4C17.8 4 20 6.3 20 9.2C20 14.5 12 21 12 21Z" stroke="#fff" stroke-width="1.7"/></svg></div><span style="font-size:13px; color:#E8E3DA; font-weight:600;">Saran</span></div>
+    </div>
+    <!-- toolbar -->
+    <div style="background:#3A352F; display:flex; align-items:center; gap:12px; padding:9px 16px;">
+      <div onClick="{{ back }}" style="cursor:pointer; opacity:{{ backOpacity }};"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#B8B2A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="opacity:.35;"><path d="M9 6l6 6-6 6" stroke="#B8B2A6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div onClick="{{ home }}" style="cursor:pointer;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 11l8-7 8 7v8a1 1 0 01-1 1h-4v-6h-6v6H5a1 1 0 01-1-1v-8z" stroke="#B8B2A6" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+      <div style="flex:1; background:#26221E; border-radius:999px; padding:8px 16px; font-size:13px; color:#A9A396; display:flex; align-items:center; gap:8px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="5" y="10" width="14" height="10" rx="2" stroke="#6FA98F" stroke-width="1.8"/><path d="M8 10V7a4 4 0 018 0v3" stroke="#6FA98F" stroke-width="1.8"/></svg>saran.com.tr{{ urlPath }}</div>
+    </div>
+    <!-- viewport -->
+    <div class="pscroll" style="min-height:560px; background:#F5F1E9;">{{ page }}</div>
+  </div>
+  <div style="font-size:12px; color:#7C766A; font-weight:600;">Menüye, "Ücretsiz değerlendirme" ve blog kartlarına tıklayarak gezin · {{ stepLabel }}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { page: 'home', history: [] };
+
+  go(p) { this.setState(s => ({ page: p, history: [...s.history, s.page] })); window.scrollTo && window.scrollTo(0,0); }
+  back() { this.setState(s => s.history.length ? ({ page: s.history[s.history.length-1], history: s.history.slice(0,-1) }) : s); }
+  home() { this.setState({ page:'home', history: [] }); }
+  scrollSec(id){ const jump=()=>{ const el=document.getElementById(id); if(el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 56, behavior:'auto' }); }; if(this.state.page!=='home'){ this.setState(s=>({ page:'home', history:[...s.history, s.page] })); setTimeout(jump,140); } else { jump(); } }
+
+  nav(active) {
+    const R = React.createElement;
+    const go = this.go.bind(this);
+    const item = (label, key, sec) => R('span',{ key:label, onClick:()=> sec? this.scrollSec(sec) : go(key), style:{ cursor:'pointer', color: active===key?'#0E7A63':'#3A4F49', fontWeight: active===key?800:600 } }, label);
+    return R('div',{ style:{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'20px 44px', background:'rgba(245,241,233,.92)', borderBottom:'1px solid #E7E2D6', position:'sticky', top:0, zIndex:5 } },
+      R('div',{ onClick:this.home.bind(this), style:{ display:'flex', alignItems:'center', gap:'10px', cursor:'pointer' } },
+        R('div',{ style:{ width:'36px', height:'36px', borderRadius:'10px', background:'#0E7A63', display:'flex', alignItems:'center', justifyContent:'center' } }, R('svg',{width:19,height:19,viewBox:'0 0 24 24',fill:'none'},R('path',{d:'M12 21C12 21 4 14.5 4 9.2C4 6.3 6.2 4 9 4C10.5 4 11.6 4.8 12 5.6C12.4 4.8 13.5 4 15 4C17.8 4 20 6.3 20 9.2C20 14.5 12 21 12 21Z',stroke:'#fff',strokeWidth:1.7}),R('path',{d:'M9 9.2H15M12 6.2V12.2',stroke:'#fff',strokeWidth:1.7,strokeLinecap:'round'}))),
+        R('span',{ style:{ fontSize:'20px', fontWeight:800, color:'#18302A' } }, 'Saran')),
+      R('div',{ style:{ display:'flex', alignItems:'center', gap:'30px', fontSize:'15px' } }, item('Nasıl çalışır','home','sec-how'), item('Paketler','home','sec-packages'), item('Blog','blog'), item('S.S.S.','home','sec-faq')),
+      R('span',{ onClick:()=>go('eval'), style:{ background:'#0E7A63', color:'#fff', fontSize:'15px', fontWeight:700, padding:'11px 20px', borderRadius:'999px', cursor:'pointer' } }, 'Ücretsiz değerlendirme'));
+  }
+
+  pill(t,bg,col){ return React.createElement('span',{style:{background:bg,color:col,fontSize:'12px',fontWeight:800,padding:'5px 12px',borderRadius:'999px'}},t); }
+  blurBox(grad,h){ const R=React.createElement; return R('div',{style:{position:'relative',width:'100%',height:h+'px',overflow:'hidden'}},R('div',{style:{position:'absolute',inset:0,background:'linear-gradient(135deg,'+grad+')',filter:'blur(8px)'}})); }
+  footer(){ const R=React.createElement; const go=this.go.bind(this); const lnk=(t,k)=>R('span',{key:t,onClick:()=>go(k),style:{cursor:'pointer'}},t);
+    return R('div',{style:{background:'#0E3B31',color:'#A7C9BF',padding:'40px 44px'}},
+      R('div',{style:{display:'flex',justifyContent:'space-between',flexWrap:'wrap',gap:'24px'}},
+        R('div',{style:{maxWidth:'260px'}},R('div',{style:{display:'flex',alignItems:'center',gap:'9px',marginBottom:'12px'}},R('div',{style:{width:'30px',height:'30px',borderRadius:'9px',background:'#1FA37A',display:'flex',alignItems:'center',justifyContent:'center'}},R('svg',{width:16,height:16,viewBox:'0 0 24 24',fill:'none'},R('path',{d:'M12 21C12 21 4 14.5 4 9.2C4 6.3 6.2 4 9 4C10.5 4 11.6 4.8 12 5.6C12.4 4.8 13.5 4 15 4C17.8 4 20 6.3 20 9.2C20 14.5 12 21 12 21Z',stroke:'#fff',strokeWidth:1.7}))),R('span',{style:{fontSize:'18px',fontWeight:800,color:'#fff'}},'Saran')),R('p',{style:{fontSize:'13px',lineHeight:1.6,margin:0}},'Uzaktan yara bakımı ve takibi. Saran bir uzaktan takip hizmetidir; acil tıbbi yardımın yerini tutmaz.')),
+        R('div',{style:{display:'flex',flexDirection:'column',gap:'9px',fontSize:'14px'}},R('div',{style:{fontSize:'13px',fontWeight:800,color:'#7FD8C4',marginBottom:'4px'}},'Yasal'),lnk('KVKK & Gizlilik','kvkk'),lnk('Kullanım Koşulları','terms'),lnk('Çerez Politikası','kvkk')),
+        R('div',{style:{display:'flex',flexDirection:'column',gap:'9px',fontSize:'14px'}},R('div',{style:{fontSize:'13px',fontWeight:800,color:'#7FD8C4',marginBottom:'4px'}},'Keşfet'),lnk('Blog','blog'),lnk('Ücretsiz değerlendirme','eval'),R('span',null,'İletişim'))),
+      R('div',{style:{borderTop:'1px solid #1c5e50',marginTop:'28px',paddingTop:'18px',fontSize:'12px'}},'© 2026 Saran · Tüm hakları saklıdır.')); }
+  legal(title,sub,blocks){ const R=React.createElement; const go=this.go.bind(this);
+    return R('div',{className:'page'}, this.nav(''),
+      R('div',{style:{maxWidth:'760px',margin:'0 auto',padding:'40px 24px 48px'}},
+        R('div',{onClick:()=>go('home'),style:{fontSize:'13px',color:'#0E7A63',fontWeight:700,marginBottom:'18px',cursor:'pointer'}},'← Ana sayfa'),
+        R('h1',{style:{fontFamily:"'Newsreader',serif",fontSize:'38px',fontWeight:500,color:'#18302A',margin:'0 0 8px'}},title),
+        R('div',{style:{fontSize:'14px',color:'#9AA8A2',marginBottom:'28px'}},sub),
+        blocks.map((b,i)=> b.h ? R('h2',{key:i,style:{fontFamily:"'Newsreader',serif",fontSize:'22px',fontWeight:500,color:'#18302A',margin:'28px 0 12px'}},b.h) : R('p',{key:i,style:{fontSize:'16px',lineHeight:1.75,color:'#33423D',margin:'0 0 16px'}},b.p))),
+      this.footer()); }
+
+  pages() {
+    const R = React.createElement;
+    const go = this.go.bind(this);
+
+    const home = R('div',{className:'page'},
+      this.nav('home'),
+      // hero
+      R('div',{style:{display:'flex',gap:'44px',padding:'56px 44px',alignItems:'center'}},
+        R('div',{style:{flex:1.05}},
+          R('div',{style:{display:'inline-flex',alignItems:'center',gap:'8px',background:'#E3F0EB',color:'#0E7A63',fontSize:'13px',fontWeight:700,padding:'7px 14px',borderRadius:'999px',marginBottom:'22px'}},R('span',{style:{width:'7px',height:'7px',borderRadius:'50%',background:'#1FA37A'}}),' Uzaktan yara bakımı & takip'),
+          R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'52px',lineHeight:1.05,fontWeight:500,color:'#18302A',letterSpacing:'-.02em'}},'Yaranız iyileşene kadar ',R('span',{style:{fontStyle:'italic',color:'#0E7A63'}},'uzaktan yanınızdayız.')),
+          R('p',{style:{fontSize:'18px',lineHeight:1.6,color:'#4A5C56',maxWidth:'460px',margin:'20px 0 28px'}},'Fotoğrafınızı gönderin, uzman yara bakım hemşireniz değerlendirsin. İlk değerlendirme ücretsiz.'),
+          R('div',{style:{display:'flex',gap:'14px'}},
+            R('span',{onClick:()=>go('eval'),style:{background:'#0E7A63',color:'#fff',fontSize:'16px',fontWeight:700,padding:'15px 26px',borderRadius:'999px',cursor:'pointer'}},'Hemen başlayın'),
+            R('span',{onClick:()=>go('blog'),style:{color:'#18302A',fontSize:'16px',fontWeight:700,padding:'15px 22px',borderRadius:'999px',border:'1.5px solid #D8D2C4',cursor:'pointer'}},'Blogu keşfet'))),
+        R('div',{style:{flex:.95}},R('div',{style:{background:'#fff',borderRadius:'24px',padding:'12px',boxShadow:'0 28px 60px -28px rgba(14,122,99,.4)',border:'1px solid #ECE7DB'}},this.blurBox('#C9A593,#A87A66',330)))),
+      // how
+      R('div',{id:'sec-how',style:{padding:'52px 44px',background:'#fff',borderTop:'1px solid #ECE7DB'}},
+        R('div',{style:{textAlign:'center',marginBottom:'40px'}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'Nasıl çalışır'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A'}},'Üç adımda evden yara takibi')),
+        R('div',{style:{display:'flex',gap:'22px'}},[['1','Fotoğrafınızı gönderin','Yaranızın fotoğrafını çekin, kısa soruları yanıtlayın.'],['2','Hemşire değerlendirir','Uzman hemşireniz durumu inceler, bakım planı önerir.'],['3','İyileşmeyi takip edin','Önce/sonra ve zaman çizelgesiyle iyileşmeyi net görün.']].map((c,i)=>R('div',{key:i,style:{flex:1,background:'#F8F6F0',borderRadius:'20px',padding:'28px',border:'1px solid #ECE7DB'}},R('div',{style:{width:'44px',height:'44px',borderRadius:'13px',background:'#0E7A63',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800,fontSize:'17px',marginBottom:'16px'}},c[0]),R('div',{style:{fontSize:'19px',fontWeight:800,color:'#18302A',marginBottom:'8px'}},c[1]),R('p',{style:{fontSize:'14px',lineHeight:1.6,color:'#5E726B',margin:0}},c[2]))))),
+      // pricing logic
+      R('div',{style:{padding:'52px 44px',background:'#F8F6F0',borderTop:'1px solid #ECE7DB'}},
+        R('div',{style:{textAlign:'center',marginBottom:'34px'}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'Nasıl ücretlendirilir'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A'}},'Önce görün, sonra karar verin')),
+        R('div',{style:{display:'flex',gap:'14px',maxWidth:'920px',margin:'0 auto',alignItems:'stretch'}},[['🎁','1 · Ücretsiz değerlendirme','Yara fotoğrafınızı gönderin. Bu adım için hiçbir ödeme alınmaz, kart bilgisi istenmez.',false],['🩺','2 · Hemşire plan önerir','Uzman hemşireniz yaranızı değerlendirir ve durumunuza uygun bakım planını önerir.',false],['✓','3 · Onaylarsanız başlar','Planı beğenirseniz onaylayın, takibiniz başlasın. İstediğiniz an iptal edebilirsiniz.',true]].map((c,i)=>R('div',{key:i,style:{flex:1,background:c[3]?'#0E7A63':'#fff',color:c[3]?'#fff':'#18302A',borderRadius:'20px',padding:'26px',border:c[3]?'none':'1px solid #ECE7DB'}},R('div',{style:{fontSize:'26px',marginBottom:'12px'}},c[0]),R('div',{style:{fontSize:'18px',fontWeight:800,marginBottom:'6px'}},c[1]),R('p',{style:{fontSize:'14px',lineHeight:1.55,color:c[3]?'#D7EAE3':'#5E726B',margin:0}},c[2]))))),
+      // before/after
+      R('div',{style:{padding:'52px 44px'}},
+        R('div',{style:{display:'flex',gap:'40px',alignItems:'center'}},
+          R('div',{style:{flex:1}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'İlerlemeyi görün'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'32px',fontWeight:500,color:'#18302A',lineHeight:1.15,marginBottom:'14px'}},'Önce ve sonra, yan yana.'),R('p',{style:{fontSize:'16px',lineHeight:1.65,color:'#4A5C56',margin:'0 0 20px'}},'Her gönderdiğiniz fotoğraf zaman çizelgesine eklenir. Tüm görseller hasta onayıyla ve bulanıklaştırılmış olarak saklanır.'),[['Tarih damgalı, sıralı arşiv'],['İyileşme yüzdesi ölçümü'],['KVKK uyumlu, şifreli saklama']].map((r,i)=>R('div',{key:i,style:{display:'flex',alignItems:'center',gap:'11px',fontSize:'15px',fontWeight:600,color:'#3A4F49',marginBottom:'12px'}},R('svg',{width:18,height:18,viewBox:'0 0 24 24',fill:'none'},R('path',{d:'M5 13l4 4L19 7',stroke:'#1FA37A',strokeWidth:2.2,strokeLinecap:'round',strokeLinejoin:'round'})),r[0]))),
+          R('div',{style:{flex:1,position:'relative',borderRadius:'20px',overflow:'hidden',aspectRatio:'16/11',border:'1px solid #ECE7DB'}},R('div',{style:{position:'absolute',inset:0,background:'linear-gradient(135deg,#C9A593,#A87a66)',filter:'blur(7px)'}}),R('div',{style:{position:'absolute',inset:0,width:'52%',overflow:'hidden'}},R('div',{style:{position:'absolute',inset:0,background:'linear-gradient(135deg,#D8C0A0,#BFA07F)',filter:'blur(7px)'}})),R('div',{style:{position:'absolute',left:'18px',top:'16px',background:'rgba(24,48,42,.78)',color:'#fff',fontSize:'12px',fontWeight:700,padding:'5px 11px',borderRadius:'999px'}},'Sonra · 14. gün'),R('div',{style:{position:'absolute',right:'18px',top:'16px',background:'rgba(24,48,42,.78)',color:'#fff',fontSize:'12px',fontWeight:700,padding:'5px 11px',borderRadius:'999px'}},'Önce · 1. gün'),R('div',{style:{position:'absolute',top:0,bottom:0,left:'52%',width:'3px',background:'#fff'}})))),
+      // packages
+      R('div',{id:'sec-packages',style:{padding:'56px 44px',background:'#0E3B31'}},
+        R('div',{style:{textAlign:'center',marginBottom:'36px'}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#7FD8C4',marginBottom:'10px'}},'Paketler'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#fff'}},'Size uygun bakım planı')),
+        R('div',{style:{display:'flex',gap:'20px',maxWidth:'920px',margin:'0 auto',alignItems:'stretch'}},
+          R('div',{style:{flex:1,background:'#114a3e',borderRadius:'22px',padding:'28px',border:'1px solid #1c5e50'}},R('div',{style:{fontSize:'15px',fontWeight:700,color:'#9FE6D6'}},'Tek Değerlendirme'),R('div',{style:{fontSize:'34px',fontWeight:800,color:'#fff',margin:'4px 0'}},'₺350'),R('p',{style:{fontSize:'14px',color:'#A7C9BF',margin:'0 0 16px'}},'Tek bir yara için hızlı uzman görüşü.'),['1 fotoğraf değerlendirmesi','Yazılı bakım önerisi','48 saat soru hakkı'].map((t,i)=>R('div',{key:i,style:{fontSize:'14px',color:'#D7EAE3',marginBottom:'8px'}},'✓ '+t))),
+          R('div',{style:{flex:1.05,background:'#fff',borderRadius:'22px',padding:'30px',position:'relative'}},R('div',{style:{position:'absolute',top:'-13px',left:'50%',transform:'translateX(-50%)',background:'#D98456',color:'#fff',fontSize:'12px',fontWeight:800,padding:'6px 14px',borderRadius:'999px'}},'EN POPÜLER'),R('div',{style:{fontSize:'15px',fontWeight:700,color:'#0E7A63'}},'Aylık Takip'),R('div',{style:{fontSize:'36px',fontWeight:800,color:'#18302A',margin:'4px 0'}},'₺1.200',R('span',{style:{fontSize:'15px',fontWeight:600,color:'#5E726B'}},' / ay')),R('p',{style:{fontSize:'14px',color:'#5E726B',margin:'0 0 16px'}},'Sürekli takip gereken kronik yaralar için.'),['Sınırsız fotoğraf gönderimi','Haftalık değerlendirme','Anlık mesajlaşma','İyileşme zaman çizelgesi'].map((t,i)=>R('div',{key:i,style:{fontSize:'14px',color:'#33423D',marginBottom:'8px'}},'✓ '+t)),R('div',{onClick:()=>go('eval'),style:{marginTop:'12px',textAlign:'center',background:'#0E7A63',color:'#fff',fontWeight:800,padding:'12px',borderRadius:'999px',cursor:'pointer'}},'Aboneliği başlat')),
+          R('div',{style:{flex:1,background:'#114a3e',borderRadius:'22px',padding:'28px',border:'1px solid #1c5e50'}},R('div',{style:{fontSize:'15px',fontWeight:700,color:'#9FE6D6'}},'Aile Planı'),R('div',{style:{fontSize:'34px',fontWeight:800,color:'#fff',margin:'4px 0'}},'₺1.900'),R('p',{style:{fontSize:'14px',color:'#A7C9BF',margin:'0 0 16px'}},'Birden fazla yakını olanlar için.'),['3 hastaya kadar','Aylık Takip\u2019in tümü','Öncelikli yanıt'].map((t,i)=>R('div',{key:i,style:{fontSize:'14px',color:'#D7EAE3',marginBottom:'8px'}},'✓ '+t))))),
+      // healing stories
+      R('div',{style:{padding:'56px 44px'}},
+        R('div',{style:{textAlign:'center',marginBottom:'14px'}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'İyileşme hikâyeleri'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A'}},'Yaraları gerçekten iyileşti.')),
+        R('div',{style:{display:'flex',justifyContent:'center',gap:'0',maxWidth:'680px',margin:'26px auto 34px',background:'#fff',border:'1px solid #ECE7DB',borderRadius:'18px',overflow:'hidden'}},[['4,9 ★','312 değerlendirme'],['%91','planını tamamladı'],['1.200+','iyileşen yara']].map((s,i,a)=>[R('div',{key:'c'+i,style:{flex:1,textAlign:'center',padding:'20px'}},R('div',{style:{fontSize:'24px',fontWeight:800,color:'#18302A'}},s[0]),R('div',{style:{fontSize:'13px',color:'#5E726B',fontWeight:600}},s[1])),i<a.length-1&&R('div',{key:'d'+i,style:{width:'1px',background:'#ECE7DB'}})])),
+        R('div',{style:{display:'flex',gap:'20px'}},[['Bası yarası','6 haftada kapandı','"Annem yatağa bağımlıydı, yarası her gün kötüleşiyordu. 6 hafta içinde tamamen kapandı."','M','Meltem K.','Annesi için · Ankara','#C9A593,#A87A66','#E0CFB2,#CBB592'],['Diyabetik ayak','%85 iyileşme','"Ampütasyondan korkuyordum. Hemşire hanım ilk fotoğrafta beni sakinleştirdi, 3 haftalık plan verdi."','H','Hasan T.','Hasta · İzmir','#BE8E78,#A06A52','#E2D2B6,#CDB994'],['Cerrahi yara','4 haftada kapandı','"Yurt dışındaydım, babamın yarasını uzaktan yönettik. Her hafta düzeldiğini gördük."','S','Selin A.','Babası için · Berlin','#C49A86,#A2705A','#E4D4B8,#CFBB96']].map((c,i)=>R('div',{key:i,style:{flex:1,background:'#fff',borderRadius:'22px',padding:'18px',border:'1px solid #ECE7DB'}},R('div',{style:{display:'flex',gap:'8px',marginBottom:'14px'}},R('div',{style:{flex:1,position:'relative',aspectRatio:'4/3',borderRadius:'12px',overflow:'hidden'}},R('div',{style:{position:'absolute',inset:0,background:'linear-gradient(135deg,'+c[6]+')',filter:'blur(7px)'}}),R('div',{style:{position:'absolute',left:'7px',top:'7px',background:'rgba(24,48,42,.72)',color:'#fff',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'6px'}},'Önce')),R('div',{style:{flex:1,position:'relative',aspectRatio:'4/3',borderRadius:'12px',overflow:'hidden'}},R('div',{style:{position:'absolute',inset:0,background:'linear-gradient(135deg,'+c[7]+')',filter:'blur(7px)'}}),R('div',{style:{position:'absolute',left:'7px',top:'7px',background:'rgba(31,163,122,.9)',color:'#fff',fontSize:'10px',fontWeight:700,padding:'3px 8px',borderRadius:'6px'}},'Sonra'))),R('div',{style:{display:'flex',gap:'8px',marginBottom:'14px'}},this.pill(c[0],'#E3F4EC','#1FA37A'),this.pill(c[1],'#F2EFE6','#5E726B')),R('p',{style:{fontFamily:"'Newsreader',serif",fontSize:'17px',lineHeight:1.55,color:'#2A3D38',fontStyle:'italic',margin:'0 0 16px'}},c[2]),R('div',{style:{display:'flex',alignItems:'center',gap:'11px'}},R('div',{style:{width:'40px',height:'40px',borderRadius:'50%',background:'#CFE6DD',color:'#0E7A63',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800}},c[3]),R('div',null,R('div',{style:{fontSize:'14px',fontWeight:700,color:'#18302A'}},c[4]),R('div',{style:{fontSize:'13px',color:'#5E726B'}},c[5]))))))),
+      // who-for
+      R('div',{style:{padding:'52px 44px',background:'#F8F6F0'}},
+        R('div',{style:{textAlign:'center',marginBottom:'36px'}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'Kimler için'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A'}},'Hangi yaralarda yardımcı oluyoruz?')),
+        R('div',{style:{display:'flex',gap:'18px'}},[['🛏️','Bası yaraları','Yatağa bağımlı hastalarda dekübit yaralarının takibi.'],['🦶','Diyabetik ayak','Diyabete bağlı ayak ülserlerinde erken müdahale.'],['🩹','Cerrahi yaralar','Ameliyat sonrası dikiş bölgesi bakımı.'],['🔥','Yanık yarası','Yanık bölgesinin iyileşme takibi ve enfeksiyon kontrolü.']].map((c,i)=>R('div',{key:i,style:{flex:1,background:'#fff',borderRadius:'18px',padding:'24px',border:'1px solid #ECE7DB'}},R('div',{style:{fontSize:'30px',marginBottom:'12px'}},c[0]),R('div',{style:{fontSize:'17px',fontWeight:800,color:'#18302A',marginBottom:'6px'}},c[1]),R('p',{style:{fontSize:'14px',lineHeight:1.55,color:'#5E726B',margin:0}},c[2]))))),
+      // nurse intro
+      R('div',{style:{padding:'56px 44px'}},
+        R('div',{style:{display:'flex',gap:'40px',alignItems:'center',maxWidth:'920px',margin:'0 auto'}},
+          R('div',{style:{flex:.8}},R('div',{style:{background:'#fff',borderRadius:'24px',padding:'12px',boxShadow:'0 24px 50px -28px rgba(14,122,99,.4)',border:'1px solid #ECE7DB'}},this.blurBox('#CFE6DD,#A7C9BF',300))),
+          R('div',{style:{flex:1.2}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'Hemşireniz'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'30px',fontWeight:500,color:'#18302A',lineHeight:1.15,marginBottom:'14px'}},'Hem. Ayşe Yıldız ile tanışın.'),R('p',{style:{fontSize:'16px',lineHeight:1.7,color:'#4A5C56',margin:'0 0 20px'}},'12 yıllık deneyime sahip sertifikalı bir yara bakım hemşiresi. Her hastasına sakin, sabırlı ve insani bir yaklaşımla destek veriyor.'),R('div',{style:{display:'flex',gap:'30px'}},[['12 yıl','deneyim'],['Sertifikalı','yara bakım uzmanı'],['1.200+','takip edilen hasta']].map((s,i)=>R('div',{key:i},R('div',{style:{fontSize:'22px',fontWeight:800,color:'#18302A'}},s[0]),R('div',{style:{fontSize:'13px',color:'#5E726B',fontWeight:600}},s[1]))))))),
+      // faq
+      R('div',{id:'sec-faq',style:{padding:'52px 44px',background:'#F8F6F0'}},
+        R('div',{style:{textAlign:'center',marginBottom:'32px'}},R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'S.S.S.'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A'}},'Sıkça sorulan sorular')),
+        R('div',{style:{maxWidth:'700px',margin:'0 auto',display:'flex',flexDirection:'column',gap:'12px'}},[['Fotoğraflarım güvende mi?','Tüm görselleriniz uçtan uca şifrelenir ve yalnızca atanan hemşireniz görebilir. KVKK\u2019ya tam uyumludur.'],['Ne kadar sürede yanıt alırım?',null],['Bu hizmet doktor muayenesinin yerine geçer mi?',null],['Aboneliğimi istediğim zaman iptal edebilir miyim?',null]].map((q,i)=>R('div',{key:i,style:{background:'#fff',borderRadius:'16px',padding:'20px 24px',border:'1px solid #ECE7DB'}},R('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},R('span',{style:{fontSize:'16px',fontWeight:700,color:'#18302A'}},q[0]),R('span',{style:{color:i===0?'#0E7A63':'#C4BCA8',fontSize:'20px'}},i===0?'−':'+')),i===0&&q[1]&&R('p',{style:{fontSize:'15px',lineHeight:1.6,color:'#5E726B',margin:'12px 0 0'}},q[1]))))),
+      // cta
+      R('div',{style:{padding:'48px 44px',display:'flex',alignItems:'center',justifyContent:'space-between'}},
+        R('div',null,R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'28px',fontWeight:500,color:'#18302A'}},'Bugün ilk fotoğrafınızı gönderin.'),R('div',{style:{fontSize:'15px',color:'#5E726B',marginTop:'6px'}},'İlk değerlendirme ücretsiz. Kredi kartı gerekmez.')),
+        R('span',{onClick:()=>go('eval'),style:{background:'#0E7A63',color:'#fff',fontSize:'16px',fontWeight:800,padding:'15px 28px',borderRadius:'999px',cursor:'pointer'}},'Ücretsiz başla →')),
+      this.footer());
+
+    const blog = R('div',{className:'page'},
+      this.nav('blog'),
+      R('div',{style:{padding:'48px 44px 28px',textAlign:'center'}},
+        R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'12px'}},'Yara bakımı rehberi'),
+        R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'42px',fontWeight:500,color:'#18302A'}},'Yara bakımı bilgi blogu'),
+        R('p',{style:{fontSize:'17px',lineHeight:1.6,color:'#5E726B',maxWidth:'560px',margin:'14px auto 0'}},'Uzman hemşiremizin kaleminden güvenilir rehberler.')),
+      R('div',{style:{display:'flex',gap:'10px',justifyContent:'center',flexWrap:'wrap',padding:'0 44px 32px'}},['Tümü','Diyabetik ayak','Bası yarası','Pansuman','Beslenme'].map((t,i)=>R('span',{key:i,style:{background:i===0?'#0E7A63':'#fff',color:i===0?'#fff':'#3A4F49',border:i===0?'none':'1px solid #ECE7DB',fontSize:'14px',fontWeight:700,padding:'8px 16px',borderRadius:'999px'}},t))),
+      // featured (clickable → article)
+      R('div',{style:{padding:'0 44px 24px'}},
+        R('div',{onClick:()=>go('article-diyabet'),style:{background:'#fff',borderRadius:'24px',overflow:'hidden',border:'1px solid #ECE7DB',display:'flex',cursor:'pointer'}},
+          R('div',{style:{width:'46%',position:'relative'}},this.blurBox('#C9A593,#A87A66',300),R('span',{style:{position:'absolute',left:'18px',top:'18px',background:'#D98456',color:'#fff',fontSize:'12px',fontWeight:800,padding:'6px 13px',borderRadius:'999px'}},'ÖNE ÇIKAN')),
+          R('div',{style:{flex:1,padding:'36px'}},this.pill('DİYABETİK AYAK','#E3F0EB','#0E7A63'),R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'30px',fontWeight:500,color:'#18302A',lineHeight:1.2,margin:'16px 0 12px'}},'Diyabetik ayak yarası nasıl önlenir? 7 adımda evde bakım'),R('p',{style:{fontSize:'16px',lineHeight:1.65,color:'#5E726B',margin:'0 0 20px'}},'Günlük kontrol, doğru ayakkabı seçimi ve erken müdahale ile çoğu yara önlenebilir.'),R('span',{style:{color:'#0E7A63',fontSize:'15px',fontWeight:700}},'Makaleyi oku →')))),
+      // grid
+      R('div',{style:{padding:'24px 44px 48px'}},R('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'22px'}},
+        [['BASI YARASI','#E3F0EB','#0E7A63','Yatağa bağımlı hastalarda bası yarasını önlemenin yolları','#BE8E78,#A06A52','article-basi'],['PANSUMAN','#FBF1DD','#B07D1E','Evde doğru pansuman nasıl yapılır? Adım adım kılavuz','#D2B894,#B89A76','article-pansuman'],['BESLENME','#EDE7F6','#6B4FA8','Yara iyileşmesini hızlandıran besinler ve vitaminler','#C9A78A,#A8855F','article-beslenme']].map((c,i)=>
+          R('div',{key:i,onClick:()=>go(c[5]),style:{background:'#fff',borderRadius:'20px',overflow:'hidden',border:'1px solid #ECE7DB',cursor:'pointer'}},this.blurBox(c[4],170),R('div',{style:{padding:'20px'}},this.pill(c[0],c[1],c[2]),R('div',{style:{fontSize:'19px',fontWeight:800,color:'#18302A',lineHeight:1.25,margin:'12px 0 8px'}},c[3]),R('div',{style:{fontSize:'13px',color:'#9AA8A2'}},'5 dk okuma')))),
+        this.footer())));
+
+    const artData = {
+      'article-diyabet': { cat:'DİYABETİK AYAK', img:'#C9A593,#A87A66', read:'8 dk okuma',
+        title:'Diyabetik ayak yarası nasıl önlenir? 7 adımda evde bakım rehberi',
+        intro:'Diyabet hastalarında ayak yaraları zamanında önlem alınmazsa ciddi sonuçlara yol açabilir. Bu rehberde evde uygulayabileceğiniz 7 temel adımı anlatıyoruz.',
+        body:[ {p:'Diyabet, kan dolaşımını ve sinir uçlarını etkileyerek ayaklarda küçük yaraların fark edilmeden büyümesine neden olabilir. İyi haber: düzenli bakım ve erken fark etme ile bu yaraların çoğu önlenebilir.'},
+          {h:'1. Ayaklarınızı her gün kontrol edin'}, {p:'Her akşam ayaklarınızı kızarıklık, kabarcık, kesik veya renk değişikliği açısından inceleyin. Göremiyorsanız ayna kullanın veya yardım isteyin.'},
+          {note:'Küçük bir kızarıklık bile önemli olabilir. Emin değilseniz fotoğrafını çekip uzaktan bir hemşireye danışın.'},
+          {h:'2. Uygun ayakkabı ve çorap seçin'}, {p:'Dar ayakkabılar basınç yaralarına yol açar. Dikişsiz çoraplar ve yumuşak, geniş ayakkabılar tercih edin. Ayakkabınızı giymeden önce içini elinizle kontrol edin.'},
+          {h:'3. Ayaklarınızı nemli ama kuru tutun'}, {p:'Cildi nemlendirin ama parmak aralarını kuru bırakın — nem mantar enfeksiyonuna davetiye çıkarır.'},
+          {h:'4. Tırnaklarınızı dikkatli kesin'}, {p:'Düz kesin, köşeleri çok derin almayın. Batık tırnak riskini azaltır.'},
+          {h:'5. Kan şekerinizi kontrol altında tutun'}, {p:'Yüksek kan şekeri iyileşmeyi yavaşlatır. Düzenli ölçüm ve doktor takibi yaranın seyri için kritiktir.'} ] },
+      'article-basi': { cat:'BASI YARASI', img:'#BE8E78,#A06A52', read:'6 dk okuma',
+        title:'Yatağa bağımlı hastalarda bası yarasını önlemenin yolları',
+        intro:'Bası (dekübit) yaraları, uzun süre aynı pozisyonda kalan hastalarda hızla gelişebilir. Doğru bakımla büyük ölçüde önlenebilir.',
+        body:[ {p:'Bası yaraları en sık kalça, topuk, sırt ve dirsek gibi kemik çıkıntılarının olduğu bölgelerde görülür. Erken fark etmek iyileşmeyi kolaylaştırır.'},
+          {h:'1. Pozisyonu düzenli değiştirin'}, {p:'Yatağa bağımlı hastayı en az 2 saatte bir çevirin. Tekerlekli sandalyedeki hastalarda bu süre daha kısadır.'},
+          {note:'Cilt kızardığında ve bastırınca beyazlamıyorsa bu 1. evre bası yarasının işareti olabilir — vakit kaybetmeden değerlendirin.'},
+          {h:'2. Basınç azaltıcı yüzeyler kullanın'}, {p:'Havalı yatak, jel yastık veya yumuşak destekler basıncı dağıtır ve riski azaltır.'},
+          {h:'3. Cildi temiz ve kuru tutun'}, {p:'Nem, ter ve idrar cildi tahriş eder. Düzenli temizlik ve kuru tutma yarayı önlemenin temelidir.'},
+          {h:'4. Beslenme ve sıvı alımına dikkat edin'}, {p:'Protein ve sıvı eksikliği cildi zayıflatır. Yeterli beslenme iyileşmeyi destekler.'} ] },
+      'article-pansuman': { cat:'PANSUMAN', img:'#D2B894,#B89A76', read:'5 dk okuma',
+        title:'Evde doğru pansuman nasıl yapılır? Adım adım kılavuz',
+        intro:'Doğru pansuman tekniği enfeksiyon riskini azaltır ve iyileşmeyi hızlandırır. İşte evde güvenli pansuman için temel adımlar.',
+        body:[ {p:'Pansuman, yarayı dış etkenlerden korur ve uygun nem dengesini sağlar. Yanlış teknik ise iyileşmeyi geciktirebilir.'},
+          {h:'1. Ellerinizi yıkayın, eldiven giyin'}, {p:'Her pansumandan önce ellerinizi en az 20 saniye yıkayın. Mümkünse tek kullanımlık eldiven kullanın.'},
+          {h:'2. Eski pansumanı dikkatle çıkarın'}, {p:'Yapışmışsa serum fizyolojik ile nemlendirerek çıkarın — zorlamak yeni dokuya zarar verir.'},
+          {note:'Pansuman değişiminde yaranın fotoğrafını çekip hemşirenize gönderin; renk ve boyut değişimini takip etmek çok değerlidir.'},
+          {h:'3. Yarayı uygun solüsyonla temizleyin'}, {p:'Genellikle serum fizyolojik yeterlidir. Hemşireniz önermedikçe alkol veya tentürdiyot kullanmayın.'},
+          {h:'4. Uygun örtüyü seçin ve kapatın'}, {p:'Yara tipine göre hidrokolloid, köpük veya basit gazlı bez kullanılır. Hemşirenizin önerisine uyun.'} ] },
+      'article-beslenme': { cat:'BESLENME', img:'#C9A78A,#A8855F', read:'5 dk okuma',
+        title:'Yara iyileşmesini hızlandıran besinler ve vitaminler',
+        intro:'İyileşme sadece pansumanla olmaz — vücudunuzun doğru yapı taşlarına ihtiyacı vardır. Doğru beslenme yaranın daha hızlı kapanmasına yardımcı olur.',
+        body:[ {p:'Yara iyileşmesi, vücudun yeni doku üretmesini gerektiren enerji yoğun bir süreçtir. Beslenme eksikliği bu süreci belirgin şekilde yavaşlatır.'},
+          {h:'1. Protein: iyileşmenin temel taşı'}, {p:'Et, balık, yumurta, baklagiller ve süt ürünleri yeni doku üretimi için gerekli proteini sağlar.'},
+          {note:'Diyabet veya böbrek rahatsızlığınız varsa beslenme planınızı mutlaka doktorunuzla netleştirin.'},
+          {h:'2. C vitamini ve çinko'}, {p:'C vitamini kolajen üretimini, çinko ise hücre onarımını destekler. Turunçgiller, biber, kabak çekirdeği faydalıdır.'},
+          {h:'3. Yeterli su için'}, {p:'Sıvı eksikliği cilt sağlığını bozar. Kısıtlamanız yoksa gün boyu yeterli su içmeye özen gösterin.'} ] },
+    };
+    const article = (key) => { const a = artData[key] || artData['article-diyabet']; return R('div',{className:'page'},
+      this.nav('blog'),
+      R('div',{style:{padding:'32px 0 48px',maxWidth:'760px',margin:'0 auto'}},
+        R('div',{style:{padding:'0 24px'}},
+          R('div',{onClick:()=>go('blog'),style:{fontSize:'13px',color:'#0E7A63',fontWeight:700,marginBottom:'20px',cursor:'pointer'}},'← Blog'),
+          this.pill(a.cat,'#E3F0EB','#0E7A63'),
+          R('h1',{style:{fontFamily:"'Newsreader',serif",fontSize:'40px',fontWeight:500,color:'#18302A',lineHeight:1.15,margin:'18px 0 16px'}},a.title),
+          R('p',{style:{fontSize:'18px',lineHeight:1.6,color:'#5E726B',margin:'0 0 24px'}},a.intro),
+          R('div',{style:{display:'flex',alignItems:'center',gap:'12px',padding:'16px 0',borderTop:'1px solid #ECE7DB',borderBottom:'1px solid #ECE7DB',marginBottom:'28px'}},R('div',{style:{width:'44px',height:'44px',borderRadius:'50%',background:'#CFE6DD',color:'#0E7A63',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:800}},'A'),R('div',null,R('div',{style:{fontSize:'14px',fontWeight:700,color:'#18302A'}},'Hem. Ayşe Yıldız'),R('div',{style:{fontSize:'13px',color:'#9AA8A2'}},'Sertifikalı Yara Bakım Hemşiresi · '+a.read)))),
+        this.blurBox(a.img,340),
+        R('div',{style:{padding:'28px 24px 0'}},
+          a.body.map((b,i)=> b.h ? R('h2',{key:i,style:{fontFamily:"'Newsreader',serif",fontSize:'26px',fontWeight:500,color:'#18302A',margin:'30px 0 14px'}},b.h)
+            : b.note ? R('div',{key:i,style:{background:'#E3F0EB',borderLeft:'4px solid #0E7A63',borderRadius:'0 14px 14px 0',padding:'18px 22px',margin:'24px 0'}},R('div',{style:{fontSize:'14px',fontWeight:800,color:'#0E7A63',marginBottom:'6px'}},'💡 Hemşire notu'),R('p',{style:{fontSize:'16px',lineHeight:1.6,color:'#236B59',margin:0}},b.note))
+            : R('p',{key:i,style:{fontSize:'17px',lineHeight:1.75,color:'#33423D',margin:'0 0 20px'}},b.p)),
+          R('div',{style:{background:'#0E3B31',borderRadius:'20px',padding:'28px',margin:'18px 0 0',display:'flex',alignItems:'center',gap:'24px'}},R('div',{style:{flex:1}},R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'24px',fontWeight:500,color:'#fff',lineHeight:1.25}},'Bir yara mı fark ettiniz?'),R('p',{style:{fontSize:'15px',color:'#A7C9BF',margin:'8px 0 0'}},'İlk fotoğrafınızı gönderin, ücretsiz değerlendirelim.')),R('span',{onClick:()=>go('eval'),style:{background:'#1FA37A',color:'#fff',fontSize:'15px',fontWeight:800,padding:'14px 24px',borderRadius:'999px',whiteSpace:'nowrap',cursor:'pointer'}},'Ücretsiz başla →'))),
+        this.footer())); };
+
+    const evalPage = R('div',{className:'page'},
+      this.nav('home'),
+      R('div',{style:{display:'flex',gap:'40px',padding:'48px 44px',maxWidth:'1000px',margin:'0 auto'}},
+        R('div',{style:{flex:1.1}},
+          R('div',{style:{fontSize:'13px',fontWeight:700,letterSpacing:'.1em',textTransform:'uppercase',color:'#0E7A63',marginBottom:'10px'}},'Ücretsiz değerlendirme'),
+          R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A',lineHeight:1.15,marginBottom:'14px'}},'Yara fotoğrafınızı gönderin'),
+          R('div',{style:{background:'#E8F6EE',border:'1px solid #C3E6D5',borderRadius:'14px',padding:'14px 16px',display:'flex',gap:'10px',alignItems:'center',marginBottom:'20px'}},R('span',{style:{fontSize:'22px'}},'🎁'),R('div',null,R('div',{style:{fontSize:'14px',fontWeight:800,color:'#0E7A63'}},'İlk değerlendirme ücretsiz'),R('div',{style:{fontSize:'13px',color:'#3E7A68'}},'Plan önerilene kadar hiçbir ödeme alınmaz, kart bilgisi istenmez.'))),
+          R('div',{style:{background:'#fff',border:'2px dashed #BFD8CE',borderRadius:'18px',padding:'34px',textAlign:'center',marginBottom:'18px'}},R('div',{style:{width:'56px',height:'56px',borderRadius:'50%',background:'#E3F0EB',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 12px',fontSize:'26px'}},'📷'),R('div',{style:{fontSize:'17px',fontWeight:800,color:'#18302A'}},'Fotoğraf sürükleyin veya yükleyin'),R('div',{style:{fontSize:'14px',color:'#5E726B',marginTop:'4px'}},'Net, iyi ışıklı bir kare en doğru sonucu verir.')),
+          R('div',{style:{display:'flex',flexWrap:'wrap',gap:'9px',marginBottom:'22px'}},['Bası yarası','Diyabetik ayak','Cerrahi yara','Venöz ülser'].map((t,i)=>R('span',{key:i,style:{background:i===1?'#0E7A63':'#fff',color:i===1?'#fff':'#5E726B',border:i===1?'none':'1px solid #ECE7DB',fontSize:'14px',fontWeight:700,padding:'9px 15px',borderRadius:'999px'}},t))),
+          R('span',{onClick:()=>go('done'),style:{display:'inline-block',background:'#0E7A63',color:'#fff',fontSize:'16px',fontWeight:800,padding:'15px 28px',borderRadius:'999px',cursor:'pointer'}},'Hemşireye gönder')),
+        R('div',{style:{flex:.9}},R('div',{style:{background:'#fff',borderRadius:'20px',padding:'12px',border:'1px solid #ECE7DB',boxShadow:'0 20px 50px -28px rgba(0,0,0,.3)'}},this.blurBox('#D8C0A0,#BFA07F',360)))));
+
+    const done = R('div',{className:'page'},
+      this.nav('home'),
+      R('div',{style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',padding:'80px 44px',minHeight:'500px'}},
+        R('div',{style:{width:'96px',height:'96px',borderRadius:'50%',background:'#E8F6EE',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'24px'}},R('svg',{width:46,height:46,viewBox:'0 0 24 24',fill:'none'},R('path',{d:'M5 13l4 4L19 7',stroke:'#1FA37A',strokeWidth:2.4,strokeLinecap:'round',strokeLinejoin:'round'}))),
+        R('div',{style:{fontFamily:"'Newsreader',serif",fontSize:'34px',fontWeight:500,color:'#18302A'}},'Fotoğrafınız iletildi 🌿'),
+        R('p',{style:{fontSize:'17px',lineHeight:1.6,color:'#5E726B',maxWidth:'440px',margin:'14px 0 28px'}},'Uzman hemşiremiz değerlendirmenizi inceliyor. Yaklaşık 2 saat içinde bakım planı öneriniz hazır olacak — onaylarsanız takip başlar.'),
+        R('div',{style:{display:'flex',gap:'12px'}},R('span',{onClick:this.home.bind(this),style:{background:'#0E7A63',color:'#fff',fontSize:'15px',fontWeight:800,padding:'14px 26px',borderRadius:'999px',cursor:'pointer'}},'Ana sayfaya dön'),R('span',{onClick:()=>go('blog'),style:{background:'#fff',border:'1px solid #ECE7DB',color:'#18302A',fontSize:'15px',fontWeight:700,padding:'14px 24px',borderRadius:'999px',cursor:'pointer'}},'Blogu keşfet'))));
+
+    const kvkk = this.legal('KVKK & Gizlilik Politikası','Son güncelleme: 1 Haziran 2026',[
+      {p:'Saran olarak kişisel verilerinizin ve özellikle sağlık verilerinizin gizliliğine en yüksek önemi veriyoruz. Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında verilerinizin nasıl işlendiğini açıklar.'},
+      {h:'Hangi verileri topluyoruz?'},
+      {p:'Ad-soyad, iletişim bilgileriniz, ödeme bilgileriniz ve yara bakım hizmeti için paylaştığınız fotoğraflar ile sağlık notlarınız. Yara fotoğrafları özel nitelikli sağlık verisi olarak en üst düzeyde korunur.'},
+      {h:'Verileriniz nasıl korunur?'},
+      {p:'Tüm görseller ve sağlık verileri uçtan uca şifrelenir. Yara fotoğraflarınıza yalnızca size atanan yara bakım hemşiresi erişebilir. Veriler Türkiye sınırları içindeki güvenli sunucularda saklanır.'},
+      {h:'Verileriniz kimlerle paylaşılır?'},
+      {p:'Sağlık verileriniz üçüncü taraflarla pazarlama amacıyla asla paylaşılmaz. Yalnızca hizmetin sunulması için atanan hemşire ve yasal zorunluluk halinde yetkili kurumlarla paylaşılabilir.'},
+      {h:'Haklarınız'},
+      {p:'Dilediğiniz zaman verilerinize erişebilir, düzeltilmesini veya tamamen silinmesini talep edebilirsiniz. Hesabınızı kapattığınızda görselleriniz kalıcı olarak silinir.'} ]);
+    const terms = this.legal('Kullanım Koşulları','Son güncelleme: 1 Haziran 2026',[
+      {p:'Saran hizmetini kullanarak aşağıdaki koşulları kabul etmiş olursunuz. Lütfen dikkatlice okuyun.'},
+      {h:'Hizmetin kapsamı'},
+      {p:'Saran, uzaktan yara bakım takibi ve danışmanlığı sunar. Hizmetimiz, sertifikalı yara bakım hemşireleri tarafından sağlanan bir destek hizmetidir; yüz yüze tıbbi muayenenin veya acil tıbbi müdahalenin yerini tutmaz.'},
+      {h:'Acil durumlar'},
+      {p:'Enfeksiyon, yüksek ateş, şiddetli ağrı veya hızla kötüleşen bir yara durumunda derhal en yakın sağlık kuruluşuna başvurmalı veya 112’yi aramalısınız. Saran acil servis değildir.'},
+      {h:'Ödeme ve iptal'},
+      {p:'İlk değerlendirme ücretsizdir. Bir bakım planını yalnızca siz onayladığınızda ücretlendirme başlar. Aboneliğinizi dilediğiniz zaman iptal edebilirsiniz; iptal sonraki dönem için geçerli olur.'},
+      {h:'Sorumluluk'},
+      {p:'Hemşire önerileri mevcut bilgilere ve paylaştığınız görsellere dayanır. Doğru ve net fotoğraf paylaşmak kullanıcının sorumluluğundadır. Saran, yanlış veya eksik bilgi nedeniyle oluşabilecek sonuçlardan sorumlu tutulamaz.'} ]);
+    return Object.assign({ home, blog, eval: evalPage, done, kvkk, terms,
+      'article-diyabet': article('article-diyabet'), 'article-basi': article('article-basi'),
+      'article-pansuman': article('article-pansuman'), 'article-beslenme': article('article-beslenme') });
+  }
+
+  renderVals() {
+    const labels = { home:'Ana sayfa', blog:'Blog listesi', 'article-diyabet':'Blog makalesi', 'article-basi':'Blog makalesi', 'article-pansuman':'Blog makalesi', 'article-beslenme':'Blog makalesi', kvkk:'KVKK & Gizlilik', terms:'Kullanım Koşulları', eval:'Ücretsiz değerlendirme', done:'Gönderildi' };
+    const paths = { home:'', blog:'/blog', 'article-diyabet':'/blog/diyabetik-ayak-bakimi', 'article-basi':'/blog/basi-yarasi-onleme', 'article-pansuman':'/blog/evde-pansuman', 'article-beslenme':'/blog/yara-beslenme', kvkk:'/kvkk', terms:'/kullanim-kosullari', eval:'/degerlendirme', done:'/degerlendirme/tamam' };
+    return {
+      page: this.pages()[this.state.page],
+      back: this.back.bind(this),
+      home: this.home.bind(this),
+      backOpacity: this.state.history.length ? 1 : .35,
+      urlPath: paths[this.state.page] || '',
+      stepLabel: labels[this.state.page] || '',
+    };
+  }
+}
+</script>
+</body>
+</html>
