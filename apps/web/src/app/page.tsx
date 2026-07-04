@@ -40,10 +40,10 @@ const PRICING_LOGIC: [string, string, boolean][] = [
 ];
 
 const WHO_FOR = [
-  ["🛏️", "Bası yaraları", "Yatağa bağımlı hastalarda dekübit yaralarının takibi."],
-  ["🦶", "Diyabetik ayak", "Diyabete bağlı ayak ülserlerinde erken müdahale."],
-  ["🩹", "Cerrahi yaralar", "Ameliyat sonrası dikiş bölgesi bakımının izlenmesi."],
-  ["🔥", "Yanık yarası", "Yanık bölgesinin iyileşme takibi ve gözlemi."],
+  ["Bası yaraları", "Yatağa bağımlı hastalarda dekübit yaralarının takibi."],
+  ["Diyabetik ayak", "Diyabete bağlı ayak ülserlerinde erken müdahale."],
+  ["Cerrahi yaralar", "Ameliyat sonrası dikiş bölgesi bakımının izlenmesi."],
+  ["Yanık yarası", "Yanık bölgesinin iyileşme takibi ve gözlemi."],
 ];
 
 /** Güven çubuğu — uydurma istatistik yerine doğrulanabilir, iddiasız vaatler. */
@@ -655,7 +655,7 @@ export default async function HomePage() {
         <div className="container">
           <SectionHeader eyebrow="Kimler için" title="Hangi yaralarda yardımcı oluyoruz?" />
           <div className="cards-4">
-            {WHO_FOR.map(([icon, title, desc]) => (
+            {WHO_FOR.map(([title, desc]) => (
               <article
                 key={title}
                 style={{
@@ -663,11 +663,9 @@ export default async function HomePage() {
                   borderRadius: 18,
                   padding: 24,
                   border: "1px solid var(--card-border)",
+                  borderTop: "3px solid var(--primary)",
                 }}
               >
-                <div style={{ fontSize: 30, marginBottom: 12 }} aria-hidden>
-                  {icon}
-                </div>
                 <h3 style={{ fontSize: 17, fontWeight: 800, fontFamily: "var(--font-body)", marginBottom: 6 }}>
                   {title}
                 </h3>
