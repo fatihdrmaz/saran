@@ -31,6 +31,7 @@ export async function generateMetadata({
       title: article.title,
       description: article.intro,
       type: "article",
+      ...(article.imageUrl ? { images: [{ url: article.imageUrl, alt: article.title }] } : {}),
     },
   };
 }
@@ -111,8 +112,25 @@ export default async function ArticlePage({
           </div>
         </div>
 
-        {/* Kapak görseli */}
-        <BlurSlot height={340} gradient={article.imageGradient} label="Makale kapak görseli (bulanık placeholder)" />
+        {/* Kapak görseli: varsa gerçek görsel, yoksa gradyan placeholder */}
+        {article.imageUrl ? (
+          <div style={{ padding: "0 24px" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- harici storage görseli; remotePatterns gerektirmemek için düz img */}
+            <img
+              src={article.imageUrl}
+              alt={`${article.title} — kapak görseli`}
+              style={{
+                width: "100%",
+                height: 340,
+                objectFit: "cover",
+                borderRadius: 18,
+                display: "block",
+              }}
+            />
+          </div>
+        ) : (
+          <BlurSlot height={340} gradient={article.imageGradient} label="Makale kapak görseli (bulanık placeholder)" />
+        )}
 
         {/* Gövde */}
         <div style={{ padding: "28px 24px 0" }}>
@@ -143,8 +161,82 @@ export default async function ArticlePage({
                 </aside>
               );
             }
+            if (b.type === "ul") {
+              return (
+                <ul key={i} style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
+                  {b.items.map((item, j) => (
+                    <li
+                      key={j}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 12,
+                        fontSize: 17,
+                        lineHeight: 1.7,
+                        color: "var(--text-body)",
+                        marginBottom: 10,
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          color: "var(--primary)",
+                          fontWeight: 800,
+                          lineHeight: 1.7,
+                          flexShrink: 0,
+                        }}
+                      >
+                        ✓
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            }
+            if (b.type === "ol") {
+              return (
+                <ol key={i} style={{ listStyle: "none", padding: 0, margin: "0 0 20px" }}>
+                  {b.items.map((item, j) => (
+                    <li
+                      key={j}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 14,
+                        fontSize: 17,
+                        lineHeight: 1.7,
+                        color: "var(--text-body)",
+                        marginBottom: 14,
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          background: "var(--surface-green)",
+                          color: "var(--primary)",
+                          fontSize: 14,
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          marginTop: 1,
+                        }}
+                      >
+                        {j + 1}
+                      </span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ol>
+              );
+            }
             return (
-              <p key={i} style={{ fontSize: 17, lineHeight: 1.75, color: "var(--text-body)", margin: "0 0 20px" }}>
+              <p key={i} style={{ fontSize: 17, lineHeight: 1.7, color: "var(--text-body)", margin: "0 0 20px" }}>
                 {b.text}
               </p>
             );

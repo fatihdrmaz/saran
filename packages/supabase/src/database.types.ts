@@ -139,6 +139,7 @@ export type Database = {
           category: string
           created_at: string
           id: string
+          image_url: string | null
           intro: string
           locale: Database["public"]["Enums"]["locale_code"]
           published_at: string | null
@@ -152,6 +153,7 @@ export type Database = {
           category: string
           created_at?: string
           id?: string
+          image_url?: string | null
           intro: string
           locale?: Database["public"]["Enums"]["locale_code"]
           published_at?: string | null
@@ -165,6 +167,7 @@ export type Database = {
           category?: string
           created_at?: string
           id?: string
+          image_url?: string | null
           intro?: string
           locale?: Database["public"]["Enums"]["locale_code"]
           published_at?: string | null

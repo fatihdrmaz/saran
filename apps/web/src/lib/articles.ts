@@ -5,7 +5,7 @@
  * yazar) ve DB satırını UI modeline dönüştüren fonksiyonları içerir.
  *
  * DB kolonları (snake_case): id, category, title, slug, intro, body,
- * reading_minutes, locale, published_at, created_at, author_nurse_id.
+ * reading_minutes, locale, published_at, created_at, author_nurse_id, image_url.
  * `body` markdown benzeri düz metindir; harici lib olmadan basit bloklara ayrılır.
  */
 
@@ -14,7 +14,9 @@ import { getSupabase } from "./supabase";
 export type ArticleBlock =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
-  | { type: "note"; text: string };
+  | { type: "note"; text: string }
+  | { type: "ul"; items: string[] }
+  | { type: "ol"; items: string[] };
 
 export interface Article {
   slug: string;
@@ -29,8 +31,10 @@ export interface Article {
   readingLabel: string;
   /** öne çıkan / liste sırası */
   featured?: boolean;
-  /** görsel placeholder gradyanı */
+  /** görsel placeholder gradyanı (imageUrl yoksa fallback) */
   imageGradient: string;
+  /** Supabase storage kapak görseli; yoksa null → gradyan fallback */
+  imageUrl: string | null;
   author: {
     name: string;
     title: string;
@@ -90,45 +94,108 @@ type ArticleRow = {
   body: string;
   reading_minutes: number;
   published_at: string | null;
+  image_url: string | null;
 };
 
 const ARTICLE_COLUMNS =
-  "slug, category, title, intro, body, reading_minutes, published_at, created_at";
+  "slug, category, title, intro, body, reading_minutes, published_at, created_at, image_url";
 
 /**
  * DB `body` (markdown benzeri düz metin) → ArticleBlock[].
- * Desteklenen: `## Başlık` → h2, `> not` → note, diğer satırlar → paragraf.
+ * Desteklenen:
+ *   `## Başlık`  → h2
+ *   `> not`      → note (ardışık `>` satırları tek kutu)
+ *   `- madde`    → ul (ardışık `- ` satırları tek liste)
+ *   `1. adım`    → ol (ardışık `N. ` satırları tek liste)
+ *   diğer satır blokları → paragraf (boş satırla ayrılır)
  * Harici markdown lib YOK; sadeleştirilmiş dönüşüm.
  */
 function parseBody(raw: string): ArticleBlock[] {
   if (!raw) return [];
   const blocks: ArticleBlock[] = [];
-  // Boş satırlarla ayrılmış paragraflara böl.
+  // Boş satırlarla ayrılmış parçalara böl.
   const chunks = raw
     .replace(/\r\n/g, "\n")
     .split(/\n{2,}/)
     .map((c) => c.trim())
     .filter(Boolean);
 
+  const UL_RE = /^[-*]\s+/;
+  const OL_RE = /^\d+[.)]\s+/;
+
   for (const chunk of chunks) {
-    const lines = chunk.split("\n").map((l) => l.trim());
+    const lines = chunk
+      .split("\n")
+      .map((l) => l.trim())
+      .filter(Boolean);
 
-    // Tamamı blockquote olan parça → note
-    if (lines.every((l) => l.startsWith(">"))) {
-      const text = lines.map((l) => l.replace(/^>\s?/, "")).join(" ");
-      blocks.push({ type: "note", text });
-      continue;
+    // Parça içinde satır satır ilerle; ardışık liste/alıntı satırlarını grupla.
+    let i = 0;
+    const paragraph: string[] = [];
+    const flushParagraph = () => {
+      if (paragraph.length > 0) {
+        blocks.push({
+          type: "p",
+          text: paragraph.join(" ").replace(/^#{1,6}\s+/, ""),
+        });
+        paragraph.length = 0;
+      }
+    };
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // `> not` → note (ardışık satırlar birleşir)
+      if (line.startsWith(">")) {
+        flushParagraph();
+        const noteLines: string[] = [];
+        while (i < lines.length && lines[i].startsWith(">")) {
+          noteLines.push(lines[i].replace(/^>\s?/, ""));
+          i += 1;
+        }
+        blocks.push({ type: "note", text: noteLines.join(" ").trim() });
+        continue;
+      }
+
+      // `- madde` → ul
+      if (UL_RE.test(line)) {
+        flushParagraph();
+        const items: string[] = [];
+        while (i < lines.length && UL_RE.test(lines[i])) {
+          items.push(lines[i].replace(UL_RE, "").trim());
+          i += 1;
+        }
+        blocks.push({ type: "ul", items });
+        continue;
+      }
+
+      // `1. adım` → ol
+      if (OL_RE.test(line)) {
+        flushParagraph();
+        const items: string[] = [];
+        while (i < lines.length && OL_RE.test(lines[i])) {
+          items.push(lines[i].replace(OL_RE, "").trim());
+          i += 1;
+        }
+        blocks.push({ type: "ol", items });
+        continue;
+      }
+
+      // `## Başlık` → h2
+      const headingMatch = line.match(/^#{1,6}\s+(.*)$/);
+      if (headingMatch) {
+        flushParagraph();
+        blocks.push({ type: "h2", text: headingMatch[1].trim() });
+        i += 1;
+        continue;
+      }
+
+      // Aksi halde paragraf satırı (aynı parçadaki ardışık satırlar birleşir)
+      paragraph.push(line);
+      i += 1;
     }
 
-    // H2 başlık (## ... veya tek satır # ...)
-    const headingMatch = chunk.match(/^#{1,6}\s+(.*)$/);
-    if (headingMatch && lines.length === 1) {
-      blocks.push({ type: "h2", text: headingMatch[1].trim() });
-      continue;
-    }
-
-    // Aksi halde paragraf (satır içi tek satırlık başlık işaretlerini de temizle)
-    blocks.push({ type: "p", text: chunk.replace(/^#{1,6}\s+/, "") });
+    flushParagraph();
   }
 
   return blocks;
@@ -150,6 +217,7 @@ function toArticle(row: ArticleRow, featured = false): Article {
     readingLabel: `${minutes} dk okuma`,
     featured,
     imageGradient: presentation.gradient,
+    imageUrl: row.image_url ?? null,
     author: AUTHOR,
     body: parseBody(row.body),
   };

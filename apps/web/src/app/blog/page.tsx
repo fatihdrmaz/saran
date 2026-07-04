@@ -105,7 +105,23 @@ export default async function BlogListPage() {
           }}
         >
           <div style={{ position: "relative", flex: "1 1 320px", minHeight: 240 }}>
-            <BlurSlot height={300} gradient={featured.imageGradient} label="Öne çıkan makale görseli" />
+            {featured.imageUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element -- harici storage görseli; remotePatterns gerektirmemek için düz img */
+              <img
+                src={featured.imageUrl}
+                alt={`${featured.title} — makale görseli`}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ) : (
+              <BlurSlot height={300} gradient={featured.imageGradient} label="Öne çıkan makale görseli" />
+            )}
             <Pill
               bg="var(--warm)"
               color="#fff"
@@ -149,7 +165,16 @@ export default async function BlogListPage() {
                 display: "block",
               }}
             >
-              <BlurSlot height={170} gradient={a.imageGradient} label={`${a.category} makale görseli`} />
+              {a.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element -- harici storage görseli; remotePatterns gerektirmemek için düz img */
+                <img
+                  src={a.imageUrl}
+                  alt={`${a.title} — makale görseli`}
+                  style={{ width: "100%", height: 170, objectFit: "cover", display: "block" }}
+                />
+              ) : (
+                <BlurSlot height={170} gradient={a.imageGradient} label={`${a.category} makale görseli`} />
+              )}
               <div style={{ padding: 20 }}>
                 <Pill bg={a.categoryColor.bg} color={a.categoryColor.fg}>
                   {a.chip}
