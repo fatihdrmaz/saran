@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
+import { CookieBanner } from "../components/CookieBanner";
 
 const heading = Newsreader({
   subsets: ["latin"],
@@ -31,7 +32,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="tr" className={`${heading.variable} ${body.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        <CookieBanner />
+      </body>
     </html>
   );
 }

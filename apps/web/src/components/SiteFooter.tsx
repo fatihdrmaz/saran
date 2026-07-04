@@ -72,7 +72,13 @@ export function SiteFooter() {
             <Link href="/kosullar" style={linkStyle}>
               Kullanım Koşulları
             </Link>
-            <Link href="/kvkk#cerez" style={linkStyle}>
+            <Link href="/mesafeli-satis" style={linkStyle}>
+              Mesafeli Satış Sözleşmesi
+            </Link>
+            <Link href="/iptal-iade" style={linkStyle}>
+              İptal ve İade Politikası
+            </Link>
+            <Link href="/cerez-politikasi" style={linkStyle}>
               Çerez Politikası
             </Link>
           </nav>

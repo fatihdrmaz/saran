@@ -514,6 +514,45 @@ export type Database = {
           },
         ]
       }
+      plan_products: {
+        Row: {
+          active: boolean
+          code: Database["public"]["Enums"]["plan_type"]
+          created_at: string
+          description: string | null
+          duration_days: number
+          id: string
+          price_kurus: number
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          code: Database["public"]["Enums"]["plan_type"]
+          created_at?: string
+          description?: string | null
+          duration_days: number
+          id?: string
+          price_kurus: number
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          code?: Database["public"]["Enums"]["plan_type"]
+          created_at?: string
+          description?: string | null
+          duration_days?: number
+          id?: string
+          price_kurus?: number
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       plans: {
         Row: {
           created_at: string
@@ -521,6 +560,7 @@ export type Database = {
           id: string
           patient_id: string
           price_kurus: number
+          product_id: string | null
           prognosis_note: string | null
           progress_day: number | null
           proposed_by_nurse_id: string
@@ -535,6 +575,7 @@ export type Database = {
           id?: string
           patient_id: string
           price_kurus: number
+          product_id?: string | null
           prognosis_note?: string | null
           progress_day?: number | null
           proposed_by_nurse_id: string
@@ -549,6 +590,7 @@ export type Database = {
           id?: string
           patient_id?: string
           price_kurus?: number
+          product_id?: string | null
           prognosis_note?: string | null
           progress_day?: number | null
           proposed_by_nurse_id?: string
@@ -563,6 +605,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plans_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "plan_products"
             referencedColumns: ["id"]
           },
           {
@@ -622,6 +671,7 @@ export type Database = {
           after_image_url: string | null
           before_image_url: string | null
           created_at: string
+          display_name: string | null
           duration_label: string | null
           id: string
           patient_id: string
@@ -633,6 +683,7 @@ export type Database = {
           after_image_url?: string | null
           before_image_url?: string | null
           created_at?: string
+          display_name?: string | null
           duration_label?: string | null
           id?: string
           patient_id: string
@@ -644,6 +695,7 @@ export type Database = {
           after_image_url?: string | null
           before_image_url?: string | null
           created_at?: string
+          display_name?: string | null
           duration_label?: string | null
           id?: string
           patient_id?: string
@@ -784,6 +836,10 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      notify_edge: {
+        Args: { event: string; record_id: string }
+        Returns: undefined
+      }
       nurse_can_see_wound: { Args: { w_id: string }; Returns: boolean }
       nurse_is_assigned: { Args: { w_id: string }; Returns: boolean }
     }
@@ -804,7 +860,7 @@ export type Database = {
       pain_level: "none" | "mild" | "moderate" | "severe"
       payment_status: "paid" | "pending" | "awaiting_approval"
       plan_status: "proposed" | "active" | "expired" | "cancelled"
-      plan_type: "one_time" | "week_1" | "week_3" | "monthly"
+      plan_type: "one_time" | "week_1" | "week_3" | "monthly" | "week_2"
       user_role: "patient" | "nurse" | "admin"
       verification_status: "pending" | "verified" | "rejected"
       wound_clinical_status: "improving" | "monitoring" | "stalled" | "closed"
@@ -1406,7 +1462,7 @@ export const Constants = {
       pain_level: ["none", "mild", "moderate", "severe"],
       payment_status: ["paid", "pending", "awaiting_approval"],
       plan_status: ["proposed", "active", "expired", "cancelled"],
-      plan_type: ["one_time", "week_1", "week_3", "monthly"],
+      plan_type: ["one_time", "week_1", "week_3", "monthly", "week_2"],
       user_role: ["patient", "nurse", "admin"],
       verification_status: ["pending", "verified", "rejected"],
       wound_clinical_status: ["improving", "monitoring", "stalled", "closed"],

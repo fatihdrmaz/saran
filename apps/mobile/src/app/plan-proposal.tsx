@@ -15,14 +15,12 @@ import {
 } from "../components";
 import { sansFont } from "../lib/theme";
 import { useAuth } from "../lib/auth";
-import { getPlanByStatus } from "../lib/queries";
-import type { Database } from "@saran/supabase";
-
-type PlanRow = Database["public"]["Tables"]["plans"]["Row"];
+import { getPlanByStatus, type PlanWithProduct } from "../lib/queries";
 
 const PLAN_TYPE_LABELS: Record<string, string> = {
   [PlanType.ONE_TIME]: "Tek Seferlik",
   [PlanType.WEEK_1]: "1 Haftalık",
+  [PlanType.WEEK_2]: "2 Haftalık Takip",
   [PlanType.WEEK_3]: "3 Haftalık",
   [PlanType.MONTHLY]: "Aylık Takip",
 };
@@ -32,6 +30,8 @@ function planFeatures(type: string): string[] {
     return ["30 gün takip", "Sınırsız fotoğraf gönderimi", "Haftalık değerlendirme", "Anlık mesajlaşma"];
   if (type === PlanType.WEEK_3)
     return ["21 gün takip", "Sınırsız fotoğraf", "Haftalık değerlendirme", "Mesajlaşma"];
+  if (type === PlanType.WEEK_2)
+    return ["14 gün takip", "Sınırsız fotoğraf", "Haftalık değerlendirme", "Mesajlaşma"];
   if (type === PlanType.WEEK_1) return ["7 gün takip", "Sınırsız fotoğraf", "Mesajlaşma"];
   return ["Tek bakım talimatı", "Pansuman önerisi"];
 }
@@ -40,7 +40,7 @@ function planFeatures(type: string): string[] {
 export default function PlanProposal() {
   const router = useRouter();
   const { user } = useAuth();
-  const [plan, setPlan] = useState<PlanRow | null>(null);
+  const [plan, setPlan] = useState<PlanWithProduct | null>(null);
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -90,7 +90,7 @@ export default function PlanProposal() {
   const planView = {
     id: plan.id,
     type: plan.type,
-    name: PLAN_TYPE_LABELS[plan.type] ?? plan.type,
+    name: plan.product?.title ?? PLAN_TYPE_LABELS[plan.type] ?? plan.type,
     priceKurus: plan.price_kurus,
     durationDays: PLAN_DURATION_DAYS[plan.type as PlanType] ?? null,
     status: plan.status,

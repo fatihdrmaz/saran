@@ -7,6 +7,9 @@ import { Pill, BlurSlot } from "../../../components/ui";
 
 type Params = { slug: string };
 
+// ISR: panelden düzenlenen/yayınlanan makaleler 5 dk içinde görünür
+export const revalidate = 300;
+
 export async function generateStaticParams(): Promise<Params[]> {
   const slugs = await fetchArticleSlugs();
   return slugs.map((slug) => ({ slug }));

@@ -53,10 +53,11 @@ export type ExudateLevel = (typeof ExudateLevel)[keyof typeof ExudateLevel];
  * one_time = tek seferlik bakım talimatı satın alma alternatifi (README §6A-6).
  */
 export const PlanType = {
-  ONE_TIME: "one_time", // tek seferlik
-  WEEK_1: "week_1", // 1 haftalık
-  WEEK_3: "week_3", // 3 haftalık
-  MONTHLY: "monthly", // aylık (manuel yenilenir)
+  ONE_TIME: "one_time", // tek seferlik (legacy)
+  WEEK_1: "week_1", // haftalık takip
+  WEEK_2: "week_2", // 2 haftalık takip
+  WEEK_3: "week_3", // 3 haftalık (legacy)
+  MONTHLY: "monthly", // aylık takip (manuel yenilenir)
 } as const;
 export type PlanType = (typeof PlanType)[keyof typeof PlanType];
 

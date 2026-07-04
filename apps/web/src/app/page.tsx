@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PLAN_PRICES, PlanType, FIRST_ASSESSMENT_FREE } from "@saran/shared";
+import { FIRST_ASSESSMENT_FREE } from "@saran/shared";
 import { colors } from "@saran/tokens";
 import { PageShell } from "../components/PageShell";
 import { SectionHeader, BlurSlot, Pill } from "../components/ui";
 import { Check } from "../components/Icons";
+import { fetchReviews } from "../lib/reviews";
+import { fetchProducts } from "../lib/products";
 
 export const metadata: Metadata = {
   title: "Saran — Uzaktan Yara Bakımı & Takibi",
@@ -31,10 +33,10 @@ const HOW_STEPS = [
   ["3", "İyileşmeyi takip edin", "Önce/sonra ve zaman çizelgesiyle iyileşmeyi net görün."],
 ];
 
-const PRICING_LOGIC: [string, string, string, boolean][] = [
-  ["🎁", "1 · Ücretsiz değerlendirme", "Yara fotoğrafınızı gönderin. Bu adım için ödeme alınmaz, kart bilgisi istenmez.", false],
-  ["🩺", "2 · Hemşire plan önerir", "Uzman hemşireniz yaranızı değerlendirir ve durumunuza uygun bakım planını önerir.", false],
-  ["✓", "3 · Onaylarsanız başlar", "Planı beğenirseniz onaylayın, takibiniz başlasın. İstediğiniz an iptal edebilirsiniz.", true],
+const PRICING_LOGIC: [string, string, boolean][] = [
+  ["1 · Ücretsiz değerlendirme", "Yara fotoğrafınızı gönderin. Bu adım için ödeme alınmaz, kart bilgisi istenmez.", false],
+  ["2 · Hemşire plan önerir", "Uzman hemşireniz yaranızı değerlendirir ve durumunuza uygun bakım planını önerir.", false],
+  ["3 · Onaylarsanız başlar", "Planı beğenirseniz onaylayın, takibiniz başlasın. İstediğiniz an iptal edebilirsiniz.", true],
 ];
 
 const WHO_FOR = [
@@ -44,50 +46,14 @@ const WHO_FOR = [
   ["🔥", "Yanık yarası", "Yanık bölgesinin iyileşme takibi ve gözlemi."],
 ];
 
-const STORIES: {
-  cat: string;
-  result: string;
-  quote: string;
-  initial: string;
-  name: string;
-  meta: string;
-  before: string;
-  after: string;
-}[] = [
-  {
-    cat: "Bası yarası",
-    result: "6 haftada kapandı",
-    quote:
-      "“Annem yatağa bağımlıydı, yarası her gün kötüleşiyordu. Düzenli takip ile birkaç hafta içinde belirgin şekilde iyileşti.”",
-    initial: "M",
-    name: "Meltem K.",
-    meta: "Annesi için · Ankara",
-    before: "#c9a593, #a87a66",
-    after: "#e0cfb2, #cbb592",
-  },
-  {
-    cat: "Diyabetik ayak",
-    result: "%85 iyileşme",
-    quote:
-      "“İlk fotoğrafta hemşire hanım beni sakinleştirdi ve durumuma uygun bir plan önerdi. Süreç boyunca yalnız hissetmedim.”",
-    initial: "H",
-    name: "Hasan T.",
-    meta: "Hasta · İzmir",
-    before: "#be8e78, #a06a52",
-    after: "#e2d2b6, #cdb994",
-  },
-  {
-    cat: "Cerrahi yara",
-    result: "4 haftada kapandı",
-    quote:
-      "“Yurt dışındaydım, babamın yarasını uzaktan yönettik. Her hafta düzeldiğini fotoğraflarla görebildik.”",
-    initial: "S",
-    name: "Selin A.",
-    meta: "Babası için · Berlin",
-    before: "#c49a86, #a2705a",
-    after: "#e4d4b8, #cfbb96",
-  },
+/** Güven çubuğu — uydurma istatistik yerine doğrulanabilir, iddiasız vaatler. */
+const TRUST_ITEMS: [string, string][] = [
+  ["Ücretsiz", "ilk değerlendirme"],
+  ["Aynı gün", "genellikle yanıt"],
+  ["Şifreli", "uçtan uca görseller"],
+  ["KVKK", "uyumlu saklama"],
 ];
+
 
 const FAQ: [string, string][] = [
   [
@@ -108,7 +74,16 @@ const FAQ: [string, string][] = [
   ],
 ];
 
-export default function HomePage() {
+// ISR: fiyat/yorum panelden değişince 5 dk içinde siteye yansır (deploy gerekmez)
+export const revalidate = 300;
+
+export default async function HomePage() {
+  const [reviews, products] = await Promise.all([fetchReviews(), fetchProducts()]);
+  // "EN POPÜLER" rozeti aylık planda; yoksa ortadaki ürün öne çıkar
+  const popularCode =
+    products.find((p) => p.code === "monthly")?.code ??
+    products[Math.floor(products.length / 2)]?.code;
+
   return (
     <PageShell>
       {/* HERO */}
@@ -269,7 +244,7 @@ export default function HomePage() {
             title="Önce görün, sonra karar verin"
           />
           <div className="cards-3">
-            {PRICING_LOGIC.map(([icon, title, desc, accent]) => (
+            {PRICING_LOGIC.map(([title, desc, accent]) => (
               <article
                 key={title}
                 style={{
@@ -280,9 +255,6 @@ export default function HomePage() {
                   border: accent ? "none" : "1px solid var(--card-border)",
                 }}
               >
-                <div style={{ fontSize: 26, marginBottom: 12 }} aria-hidden>
-                  {icon}
-                </div>
                 <h3
                   style={{
                     fontSize: 18,
@@ -426,108 +398,105 @@ export default function HomePage() {
         <div className="container">
           <SectionHeader eyebrow="Paketler" title="Size uygun bakım planı" onDark />
           <div className="cards-3" style={{ alignItems: "stretch" }}>
-            {/* Tek değerlendirme */}
-            <article
-              style={{
-                background: "#114a3e",
-                borderRadius: 22,
-                padding: 28,
-                border: "1px solid #1c5e50",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#9fe6d6" }}>Tek Değerlendirme</div>
-              <div style={{ fontSize: 34, fontWeight: 800, color: "#fff", margin: "4px 0" }}>
-                {priceLabel(PLAN_PRICES[PlanType.ONE_TIME])}
-              </div>
-              <p style={{ fontSize: 14, color: "#a7c9bf", marginBottom: 16 }}>
-                Tek bir yara için hızlı uzman görüşü.
-              </p>
-              {["1 fotoğraf değerlendirmesi", "Yazılı bakım önerisi", "48 saat soru hakkı"].map((t) => (
-                <div key={t} style={{ fontSize: 14, color: "#d7eae3", marginBottom: 8 }}>
-                  ✓ {t}
-                </div>
-              ))}
-            </article>
-
-            {/* Aylık — popüler */}
-            <article
-              style={{
-                background: "#fff",
-                borderRadius: 22,
-                padding: 30,
-                position: "relative",
-              }}
-            >
-              <Pill
-                bg="var(--warm)"
-                color="#fff"
-                style={{
-                  position: "absolute",
-                  top: -13,
-                  left: "50%",
-                  transform: "translateX(-50%)",
-                }}
-              >
-                EN POPÜLER
-              </Pill>
-              <div style={{ fontSize: 15, fontWeight: 700, color: "var(--primary)" }}>Aylık Takip</div>
-              <div style={{ fontSize: 36, fontWeight: 800, color: "var(--text-heading)", margin: "4px 0" }}>
-                {priceLabel(PLAN_PRICES[PlanType.MONTHLY])}
-                <span style={{ fontSize: 15, fontWeight: 600, color: "var(--text-muted)" }}> / ay</span>
-              </div>
-              <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 16 }}>
-                Sürekli takip gereken kronik yaralar için.
-              </p>
-              {[
+            {products.map((p) => {
+              const popular = p.code === popularCode;
+              const features = [
+                `${p.durationDays} gün takip süresi`,
                 "Sınırsız fotoğraf gönderimi",
-                "Haftalık değerlendirme",
                 "Anlık mesajlaşma",
                 "İyileşme zaman çizelgesi",
-              ].map((t) => (
-                <div key={t} style={{ fontSize: 14, color: "var(--text-body)", marginBottom: 8 }}>
-                  ✓ {t}
-                </div>
-              ))}
-              <Link
-                href="/degerlendirme"
-                style={{
-                  display: "block",
-                  marginTop: 12,
-                  textAlign: "center",
-                  background: "var(--primary)",
-                  color: "#fff",
-                  fontWeight: 800,
-                  padding: 12,
-                  borderRadius: "var(--radius-pill)",
-                  textDecoration: "none",
-                }}
-              >
-                Ücretsiz başla
-              </Link>
-            </article>
-
-            {/* Aile */}
-            <article
-              style={{
-                background: "#114a3e",
-                borderRadius: 22,
-                padding: 28,
-                border: "1px solid #1c5e50",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 700, color: "#9fe6d6" }}>Aile Planı</div>
-              <div style={{ fontSize: 34, fontWeight: 800, color: "#fff", margin: "4px 0" }}>
-                {priceLabel(Math.round(PLAN_PRICES[PlanType.MONTHLY] * 2.1))}
-              </div>
-              <p style={{ fontSize: 14, color: "#a7c9bf", marginBottom: 16 }}>
-                Birden fazla yakını olanlar için.
-              </p>
-              {["3 hastaya kadar", "Aylık Takip’in tümü", "Öncelikli yanıt"].map((t) => (
-                <div key={t} style={{ fontSize: 14, color: "#d7eae3", marginBottom: 8 }}>
-                  ✓ {t}
-                </div>
-              ))}
-            </article>
+              ];
+              return (
+                <article
+                  key={p.id}
+                  style={
+                    popular
+                      ? { background: "#fff", borderRadius: 22, padding: 30, position: "relative" }
+                      : {
+                          background: "#114a3e",
+                          borderRadius: 22,
+                          padding: 28,
+                          border: "1px solid #1c5e50",
+                        }
+                  }
+                >
+                  {popular && (
+                    <Pill
+                      bg="var(--warm)"
+                      color="#fff"
+                      style={{
+                        position: "absolute",
+                        top: -13,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                      }}
+                    >
+                      EN POPÜLER
+                    </Pill>
+                  )}
+                  <div
+                    style={{
+                      fontSize: 15,
+                      fontWeight: 700,
+                      color: popular ? "var(--primary)" : "#9fe6d6",
+                    }}
+                  >
+                    {p.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: popular ? 36 : 34,
+                      fontWeight: 800,
+                      color: popular ? "var(--text-heading)" : "#fff",
+                      margin: "4px 0",
+                    }}
+                  >
+                    {priceLabel(p.priceKurus)}
+                  </div>
+                  {p.description && (
+                    <p
+                      style={{
+                        fontSize: 14,
+                        color: popular ? "var(--text-muted)" : "#a7c9bf",
+                        marginBottom: 16,
+                      }}
+                    >
+                      {p.description}
+                    </p>
+                  )}
+                  {features.map((t) => (
+                    <div
+                      key={t}
+                      style={{
+                        fontSize: 14,
+                        color: popular ? "var(--text-body)" : "#d7eae3",
+                        marginBottom: 8,
+                      }}
+                    >
+                      ✓ {t}
+                    </div>
+                  ))}
+                  {popular && (
+                    <Link
+                      href="/degerlendirme"
+                      style={{
+                        display: "block",
+                        marginTop: 12,
+                        textAlign: "center",
+                        background: "var(--primary)",
+                        color: "#fff",
+                        fontWeight: 800,
+                        padding: 12,
+                        borderRadius: "var(--radius-pill)",
+                        textDecoration: "none",
+                      }}
+                    >
+                      Ücretsiz başla
+                    </Link>
+                  )}
+                </article>
+              );
+            })}
           </div>
           <p
             style={{
@@ -545,14 +514,17 @@ export default function HomePage() {
       {/* İYİLEŞME HİKÂYELERİ + GÜVEN ÇUBUĞU */}
       <section style={{ padding: "56px 0" }}>
         <div className="container">
-          <SectionHeader eyebrow="İyileşme hikâyeleri" title="Yaraları gerçekten iyileşti." />
+          {reviews.length > 0 && (
+            <SectionHeader eyebrow="İyileşme hikâyeleri" title="Yaraları gerçekten iyileşti." />
+          )}
 
-          {/* güven çubuğu */}
+          {/* güven çubuğu — doğrulanabilir vaatler */}
           <div
             style={{
               display: "flex",
               justifyContent: "center",
-              maxWidth: 680,
+              flexWrap: "wrap",
+              maxWidth: 760,
               margin: "0 auto 34px",
               background: "#fff",
               border: "1px solid var(--card-border)",
@@ -560,14 +532,10 @@ export default function HomePage() {
               overflow: "hidden",
             }}
           >
-            {[
-              ["4,9 ★", "312 değerlendirme"],
-              ["%91", "planını tamamladı"],
-              ["1.200+", "iyileşen yara"],
-            ].map(([big, small], i, arr) => (
-              <div key={small} style={{ display: "flex", flex: 1 }}>
+            {TRUST_ITEMS.map(([big, small], i, arr) => (
+              <div key={small} style={{ display: "flex", flex: "1 1 150px" }}>
                 <div style={{ flex: 1, textAlign: "center", padding: 20 }}>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text-heading)" }}>{big}</div>
+                  <div style={{ fontSize: 19, fontWeight: 800, color: "var(--text-heading)" }}>{big}</div>
                   <div style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{small}</div>
                 </div>
                 {i < arr.length - 1 && <div style={{ width: 1, background: "var(--card-border)" }} />}
@@ -575,96 +543,110 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="cards-3">
-            {STORIES.map((s) => (
-              <article
-                key={s.name}
-                style={{
-                  background: "#fff",
-                  borderRadius: 22,
-                  padding: 18,
-                  border: "1px solid var(--card-border)",
-                }}
-              >
-                <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                  <BlurSlot gradient={s.before} aspectRatio="4 / 3" radius={12} label="Önce görseli (hasta onaylı, bulanık)">
-                    <span
-                      style={{
-                        position: "absolute",
-                        left: 7,
-                        top: 7,
-                        background: "rgba(24,48,42,.72)",
-                        color: "#fff",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: "3px 8px",
-                        borderRadius: 6,
-                      }}
-                    >
-                      Önce
-                    </span>
-                  </BlurSlot>
-                  <BlurSlot gradient={s.after} aspectRatio="4 / 3" radius={12} label="Sonra görseli (hasta onaylı, bulanık)">
-                    <span
-                      style={{
-                        position: "absolute",
-                        left: 7,
-                        top: 7,
-                        background: "rgba(31,163,122,.9)",
-                        color: "#fff",
-                        fontSize: 10,
-                        fontWeight: 700,
-                        padding: "3px 8px",
-                        borderRadius: 6,
-                      }}
-                    >
-                      Sonra
-                    </span>
-                  </BlurSlot>
-                </div>
-                <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                  <Pill bg="var(--success-bg)" color="var(--success-text)">{s.cat}</Pill>
-                  <Pill bg="var(--surface-alt)" color="var(--text-muted)">{s.result}</Pill>
-                </div>
-                <p
-                  style={{
-                    fontFamily: "var(--font-heading)",
-                    fontSize: 17,
-                    lineHeight: 1.55,
-                    color: "#2a3d38",
-                    fontStyle: "italic",
-                    marginBottom: 16,
-                  }}
-                >
-                  {s.quote}
-                </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                  <div
+          {reviews.length > 0 && (
+            <>
+              <div className="cards-3">
+                {reviews.map((s) => (
+                  <article
+                    key={s.id}
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: "50%",
-                      background: "#cfe6dd",
-                      color: "var(--primary)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 800,
+                      background: "#fff",
+                      borderRadius: 22,
+                      padding: 18,
+                      border: "1px solid var(--card-border)",
                     }}
                   >
-                    {s.initial}
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-heading)" }}>{s.name}</div>
-                    <div style={{ fontSize: 13, color: "var(--text-muted)" }}>{s.meta}</div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-          <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted-alt)", marginTop: 20 }}>
-            Görseller hasta onaylıdır ve mahremiyet için bulanıklaştırılmıştır.
-          </p>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+                      <BlurSlot gradient={s.before} aspectRatio="4 / 3" radius={12} label="Önce görseli (hasta onaylı, bulanık)">
+                        <span
+                          style={{
+                            position: "absolute",
+                            left: 7,
+                            top: 7,
+                            background: "rgba(24,48,42,.72)",
+                            color: "#fff",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          Önce
+                        </span>
+                      </BlurSlot>
+                      <BlurSlot gradient={s.after} aspectRatio="4 / 3" radius={12} label="Sonra görseli (hasta onaylı, bulanık)">
+                        <span
+                          style={{
+                            position: "absolute",
+                            left: 7,
+                            top: 7,
+                            background: "rgba(31,163,122,.9)",
+                            color: "#fff",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "3px 8px",
+                            borderRadius: 6,
+                          }}
+                        >
+                          Sonra
+                        </span>
+                      </BlurSlot>
+                    </div>
+                    <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+                      <Pill bg="var(--success-bg)" color="var(--success-text)">{s.woundLabel}</Pill>
+                      {s.durationLabel && (
+                        <Pill bg="var(--surface-alt)" color="var(--text-muted)">{s.durationLabel}</Pill>
+                      )}
+                    </div>
+                    <p
+                      style={{
+                        fontFamily: "var(--font-heading)",
+                        fontSize: 17,
+                        lineHeight: 1.55,
+                        color: "#2a3d38",
+                        fontStyle: "italic",
+                        marginBottom: 16,
+                      }}
+                    >
+                      “{s.quote}”
+                    </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
+                      <div
+                        style={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          background: "#cfe6dd",
+                          color: "var(--primary)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 800,
+                        }}
+                      >
+                        {s.initial}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-heading)" }}>{s.name}</div>
+                        <div
+                          aria-label={`${s.rating} / 5 yıldız`}
+                          style={{ fontSize: 13, color: "var(--star-text, #b7791f)", letterSpacing: 1 }}
+                        >
+                          <span aria-hidden>
+                            {"★".repeat(s.rating)}
+                            <span style={{ opacity: 0.3 }}>{"★".repeat(5 - s.rating)}</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+              <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted-alt)", marginTop: 20 }}>
+                Görseller hasta onaylıdır ve mahremiyet için bulanıklaştırılmıştır.
+              </p>
+            </>
+          )}
         </div>
       </section>
 
@@ -692,56 +674,6 @@ export default function HomePage() {
                 <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-muted)" }}>{desc}</p>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* HEMŞİRE TANITIMI */}
-      <section style={{ padding: "56px 0" }}>
-        <div className="container two-col" style={{ gridTemplateColumns: "0.8fr 1.2fr" }}>
-          <div
-            style={{
-              background: "#fff",
-              borderRadius: 24,
-              padding: 12,
-              boxShadow: "var(--shadow-elevated)",
-              border: "1px solid var(--card-border)",
-            }}
-          >
-            <BlurSlot height={300} gradient="#cfe6dd, #a7c9bf" radius={16} label="Hemşire portresi (mahremiyet için bulanık)" />
-          </div>
-          <div>
-            <div
-              style={{
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: ".1em",
-                textTransform: "uppercase",
-                color: "var(--primary)",
-                marginBottom: 10,
-              }}
-            >
-              Hemşireniz
-            </div>
-            <h2 style={{ fontSize: 30, fontWeight: 500, lineHeight: 1.15, marginBottom: 14 }}>
-              Hem. Ayşe Yıldız ile tanışın.
-            </h2>
-            <p style={{ fontSize: 16, lineHeight: 1.7, color: colors.textBodyAlt, marginBottom: 20 }}>
-              12 yıllık deneyime sahip sertifikalı bir yara bakım hemşiresi. Her
-              hastasına sakin, sabırlı ve insani bir yaklaşımla destek veriyor.
-            </p>
-            <div style={{ display: "flex", gap: 30, flexWrap: "wrap" }}>
-              {[
-                ["12 yıl", "deneyim"],
-                ["Sertifikalı", "yara bakım uzmanı"],
-                ["1.200+", "takip edilen hasta"],
-              ].map(([big, small]) => (
-                <div key={small}>
-                  <div style={{ fontSize: 22, fontWeight: 800, color: "var(--text-heading)" }}>{big}</div>
-                  <div style={{ fontSize: 13, color: "var(--text-muted)", fontWeight: 600 }}>{small}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>

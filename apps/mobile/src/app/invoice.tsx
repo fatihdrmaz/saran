@@ -17,6 +17,7 @@ import { getPaidReceipts, type PaymentReceipt } from "../lib/queries";
 const PLAN_NAMES: Record<PlanType, string> = {
   [PlanType.ONE_TIME]: "Tek Seferlik",
   [PlanType.WEEK_1]: "1 Haftalık",
+  [PlanType.WEEK_2]: "2 Haftalık Takip",
   [PlanType.WEEK_3]: "3 Haftalık",
   [PlanType.MONTHLY]: "Aylık Takip",
 };

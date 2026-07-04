@@ -10,7 +10,6 @@ import {
   AppointmentStatus,
   type CareTemplateCategory,
   PLAN_DURATION_DAYS,
-  PLAN_PRICES,
   PlanStatus,
   type PlanType,
 } from "@saran/shared";
@@ -29,6 +28,10 @@ type AppointmentRow = Database["public"]["Tables"]["appointments"]["Row"];
 type NurseRow = Database["public"]["Tables"]["nurses"]["Row"];
 type ArticleRow = Database["public"]["Tables"]["articles"]["Row"];
 type ReviewRow = Database["public"]["Tables"]["reviews"]["Row"];
+type PlanProductRow = Database["public"]["Tables"]["plan_products"]["Row"];
+
+/** Satılabilir plan ürünü (plan_products satırı). */
+export type PlanProduct = PlanProductRow;
 
 /** Bir yara + ilişkili hasta/profil/son gönderim/son plan birleşik görünümü. */
 export interface WoundCard {
@@ -181,7 +184,8 @@ export interface CreateAssessmentInput {
   prognosisNote: string;
   careInstruction?: string;
   dressingSuggestion?: string;
-  planType: PlanType;
+  /** Önerilen ürün — plan'a product_id + type (code) + fiyat SNAPSHOT yazılır. */
+  product: Pick<PlanProduct, "id" | "code" | "price_kurus">;
 }
 
 /** Değerlendirme (assessments) + plan (plans, status=proposed) insert. */
@@ -207,9 +211,11 @@ export async function createAssessmentAndPlan(
       patient_id: input.patientId,
       wound_id: input.woundId,
       proposed_by_nurse_id: input.nurseId,
-      type: input.planType,
+      product_id: input.product.id,
+      type: input.product.code,
       status: PlanStatus.PROPOSED,
-      price_kurus: PLAN_PRICES[input.planType],
+      // Fiyat SNAPSHOT: ürünün öneri anındaki fiyatı plana sabitlenir.
+      price_kurus: input.product.price_kurus,
       prognosis_note: input.prognosisNote,
     })
     .select("id")
@@ -693,4 +699,92 @@ export async function deleteReview(id: string): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from("reviews").delete().eq("id", id);
   if (error) throw error;
+}
+
+/* ----------------------------- ÜRÜNLER (PLAN_PRODUCTS) ----------------------------- */
+
+/**
+ * Plan ürünlerini listele (sort_order sırasıyla).
+ * activeOnly=true → yalnızca aktif ürünler (değerlendirme ekranı bunu kullanır).
+ * RLS: herkes okur.
+ */
+export async function fetchProducts(
+  activeOnly = false,
+): Promise<PlanProduct[]> {
+  const supabase = getSupabase();
+  let query = supabase
+    .from("plan_products")
+    .select("*")
+    .order("sort_order", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (activeOnly) query = query.eq("active", true);
+  const { data, error } = await query;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export interface CreateProductInput {
+  code: PlanType;
+  title: string;
+  description: string | null;
+  durationDays: number;
+  /** Kuruş integer (TL*100). */
+  priceKurus: number;
+  sortOrder: number;
+}
+
+/** Yeni ürün ekle. RLS yalnızca ADMIN'e izin verir; değilse hata döner. */
+export async function createProduct(
+  input: CreateProductInput,
+): Promise<PlanProduct> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("plan_products")
+    .insert({
+      code: input.code,
+      title: input.title,
+      description: input.description,
+      duration_days: input.durationDays,
+      price_kurus: input.priceKurus,
+      sort_order: input.sortOrder,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export interface UpdateProductInput {
+  title: string;
+  description: string | null;
+  durationDays: number;
+  /** Kuruş integer (TL*100). */
+  priceKurus: number;
+  active: boolean;
+  sortOrder?: number;
+}
+
+/** Ürünü güncelle. RLS yalnızca ADMIN'e izin verir; değilse hata döner. */
+export async function updateProduct(
+  id: string,
+  input: UpdateProductInput,
+): Promise<PlanProduct> {
+  const supabase = getSupabase();
+  const patch: Database["public"]["Tables"]["plan_products"]["Update"] = {
+    title: input.title,
+    description: input.description,
+    duration_days: input.durationDays,
+    price_kurus: input.priceKurus,
+    active: input.active,
+    updated_at: new Date().toISOString(),
+  };
+  if (input.sortOrder != null) patch.sort_order = input.sortOrder;
+  const { data, error } = await supabase
+    .from("plan_products")
+    .update(patch)
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
 }

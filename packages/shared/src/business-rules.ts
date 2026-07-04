@@ -15,20 +15,24 @@ export const FIRST_ASSESSMENT_FREE = true;
 export const VAT_RATE = 0.2;
 
 /**
- * Plan fiyatları (TRY, KURUŞ cinsinden integer). PLACEHOLDER — gerçek fiyatlar
- * iş tarafından belirlenecek. Para her yerde kuruş integer taşınır.
+ * Plan fiyatları (TRY, KURUŞ cinsinden integer) — FALLBACK.
+ * GERÇEK KAYNAK artık DB'deki `plan_products` tablosudur (admin panelden
+ * yönetilir); bu sabitler yalnızca DB'ye erişilemeyen bağlamlar içindir.
+ * Para her yerde kuruş integer taşınır.
  */
 export const PLAN_PRICES: Record<PlanType, number> = {
-  [PlanType.ONE_TIME]: 14990, // 149,90 ₺
-  [PlanType.WEEK_1]: 29990, // 299,90 ₺
-  [PlanType.WEEK_3]: 69990, // 699,90 ₺
-  [PlanType.MONTHLY]: 89990, // 899,90 ₺
+  [PlanType.ONE_TIME]: 14990, // legacy
+  [PlanType.WEEK_1]: 150000, // 1.500 ₺ — Haftalık Takip
+  [PlanType.WEEK_2]: 300000, // 3.000 ₺ — 2 Haftalık Takip
+  [PlanType.WEEK_3]: 69990, // legacy
+  [PlanType.MONTHLY]: 500000, // 5.000 ₺ — Aylık Takip
 };
 
-/** Plan süresi (gün). one_time süresizdir (null). */
+/** Plan süresi (gün). one_time süresizdir (null). Gerçek kaynak: plan_products. */
 export const PLAN_DURATION_DAYS: Record<PlanType, number | null> = {
   [PlanType.ONE_TIME]: null,
   [PlanType.WEEK_1]: 7,
+  [PlanType.WEEK_2]: 14,
   [PlanType.WEEK_3]: 21,
   [PlanType.MONTHLY]: 30,
 };

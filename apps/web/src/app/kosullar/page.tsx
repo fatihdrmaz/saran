@@ -14,7 +14,7 @@ const BLOCKS: LegalBlock[] = [
   },
   { h: "Hizmetin kapsamı" },
   {
-    p: "Saran, uzaktan yara bakım takibi ve danışmanlığı sunan bir dijital platformdur. Hizmetimiz, sertifikalı yara bakım hemşireleri tarafından sağlanan bir destek hizmetidir; yüz yüze tıbbi muayenenin, kesin tanının veya acil tıbbi müdahalenin yerini tutmaz.",
+    p: "Saran, uzaktan yara bakım takibi ve danışmanlığı sunan bir dijital platformdur. Hizmetimiz, sertifikalı yara bakım hemşiremiz tarafından sağlanan bir destek hizmetidir; yüz yüze tıbbi muayenenin, kesin tanının veya acil tıbbi müdahalenin yerini tutmaz.",
   },
   { h: "Uygunluk ve hesap" },
   {

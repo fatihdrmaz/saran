@@ -35,6 +35,7 @@ export const painLevelLabel: Record<PainLevel, string> = {
 export const planTypeLabel: Record<PlanType, string> = {
   [PlanType.ONE_TIME]: "Tek seferlik",
   [PlanType.WEEK_1]: "1 haftalık",
+  [PlanType.WEEK_2]: "2 Haftalık Takip",
   [PlanType.WEEK_3]: "3 haftalık",
   [PlanType.MONTHLY]: "Aylık takip",
 };
@@ -42,6 +43,7 @@ export const planTypeLabel: Record<PlanType, string> = {
 export const planDurationLabel: Record<PlanType, string> = {
   [PlanType.ONE_TIME]: "Süresiz",
   [PlanType.WEEK_1]: "7 gün",
+  [PlanType.WEEK_2]: "14 gün",
   [PlanType.WEEK_3]: "21 gün",
   [PlanType.MONTHLY]: "30 gün",
 };

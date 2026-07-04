@@ -8,6 +8,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const PLAN_DURATION_DAYS: Record<string, number | null> = {
   one_time: null,
   week_1: 7,
+  week_2: 14,
   week_3: 21,
   monthly: 30,
 };
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
   const admin = createClient(url, serviceKey);
   const { data: plan, error: planErr } = await admin
     .from("plans")
-    .select("id, patient_id, type, price_kurus, status")
+    .select("id, patient_id, type, price_kurus, status, product_id")
     .eq("id", planId)
     .single();
 
@@ -65,8 +66,18 @@ Deno.serve(async (req) => {
   });
   if (payErr) return json({ error: "Ödeme kaydı başarısız", detail: payErr.message }, 500);
 
-  // 5) Plan'ı aktifleştir → takip akışı açılır
-  const days = PLAN_DURATION_DAYS[plan.type as string];
+  // 5) Plan'ı aktifleştir → takip akışı açılır.
+  // Süreyi önce üründen (plan_products) oku; yoksa legacy type map'ine düş.
+  let days: number | null | undefined;
+  if (plan.product_id) {
+    const { data: product } = await admin
+      .from("plan_products")
+      .select("duration_days")
+      .eq("id", plan.product_id)
+      .single();
+    days = product?.duration_days;
+  }
+  if (days === undefined) days = PLAN_DURATION_DAYS[plan.type as string];
   const now = new Date();
   const endsAt = days ? new Date(now.getTime() + days * 86400000).toISOString() : null;
 

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlanType, PLAN_PRICES, assessmentSchema } from "@saran/shared";
+import { assessmentSchema } from "@saran/shared";
 import {
   Button,
   Card,
@@ -13,17 +13,15 @@ import {
 import {
   formatKurus,
   painLevelLabel,
-  planDurationLabel,
-  planTypeLabel,
   woundTypeLabel,
 } from "../../../../lib/labels";
 import {
   claimWound,
   createAssessmentAndPlan,
+  fetchProducts,
+  type PlanProduct,
   type WoundCard,
 } from "../../../../lib/queries";
-
-const PLAN_OPTIONS: PlanType[] = [PlanType.WEEK_1, PlanType.WEEK_3, PlanType.MONTHLY];
 
 const labelStyle = {
   fontSize: 13,
@@ -54,7 +52,8 @@ export function AssessmentForm({
   const [healingDays, setHealingDays] = useState("");
   const [prognosisNote, setPrognosisNote] = useState("");
   const [careInstruction, setCareInstruction] = useState("");
-  const [selectedPlan, setSelectedPlan] = useState<PlanType>(PlanType.MONTHLY);
+  const [products, setProducts] = useState<PlanProduct[] | null>(null);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -62,6 +61,29 @@ export function AssessmentForm({
   const isMine = wound.assignedNurseId === nurseId;
   const isPool = wound.assignedNurseId === null;
   const submission = wound.lastSubmission;
+
+  // Aktif ürünler (plan_products) — plan seçenekleri DB'den gelir.
+  useEffect(() => {
+    let mounted = true;
+    fetchProducts(true)
+      .then((list) => {
+        if (!mounted) return;
+        setProducts(list);
+        // Varsayılan seçim: son ürün (en kapsamlı plan, sort_order sonuncusu).
+        if (list.length > 0) {
+          setSelectedProductId((cur) => cur ?? list[list.length - 1]!.id);
+        }
+      })
+      .catch((e) => {
+        if (mounted) setError((e as Error).message ?? "Ürünler yüklenemedi");
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const selectedProduct =
+    products?.find((p) => p.id === selectedProductId) ?? null;
 
   const claim = async () => {
     setError(null);
@@ -81,13 +103,17 @@ export function AssessmentForm({
       setError("Bu yara için gönderim bulunamadı.");
       return;
     }
+    if (!selectedProduct) {
+      setError("Lütfen hastaya önerilecek bir plan seçin.");
+      return;
+    }
     const result = assessmentSchema.safeParse({
       submissionId: submission.id,
       tissueType: tissueType || undefined,
       estimatedHealingDays: healingDays ? Number(healingDays) : undefined,
       prognosisNote,
       careInstruction: careInstruction || undefined,
-      proposedPlanType: selectedPlan,
+      proposedPlanType: selectedProduct.code,
     });
     if (!result.success) {
       setError(result.error.issues[0]?.message ?? "Form geçersiz");
@@ -105,9 +131,11 @@ export function AssessmentForm({
         estimatedHealingDays: healingDays ? Number(healingDays) : undefined,
         prognosisNote,
         careInstruction: careInstruction || undefined,
-        planType: selectedPlan,
+        product: selectedProduct,
       });
-      router.push(`/hastalar/${wound.patientId}/gonderildi?plan=${selectedPlan}`);
+      router.push(
+        `/hastalar/${wound.patientId}/gonderildi?plan=${selectedProduct.code}`,
+      );
     } catch (e) {
       setError((e as Error).message ?? "Kaydetme başarısız");
       setSubmitting(false);
@@ -261,34 +289,51 @@ export function AssessmentForm({
               </div>
 
               <label style={labelStyle}>Hastaya önerilecek plan</label>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 16 }}>
-                {PLAN_OPTIONS.map((pt) => {
-                  const active = selectedPlan === pt;
-                  return (
-                    <button
-                      key={pt}
-                      onClick={() => setSelectedPlan(pt)}
-                      style={{
-                        textAlign: "left",
-                        border: `2px solid ${active ? "var(--primary)" : "var(--card-border)"}`,
-                        background: active ? "var(--surface-green)" : "#fff",
-                        borderRadius: 12,
-                        padding: "12px 14px",
-                      }}
-                    >
-                      <div style={{ fontWeight: 800, color: "var(--text-heading)", fontSize: 13.5 }}>
-                        {planTypeLabel[pt]}
-                      </div>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                        {planDurationLabel[pt]}
-                      </div>
-                      <div style={{ fontWeight: 800, color: "var(--primary)", marginTop: 6 }}>
-                        {formatKurus(PLAN_PRICES[pt])}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+              {products === null ? (
+                <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
+                  Planlar yükleniyor…
+                </div>
+              ) : products.length === 0 ? (
+                <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 16 }}>
+                  Aktif plan ürünü bulunamadı. Lütfen yöneticinizle iletişime geçin.
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${Math.min(products.length, 3)}, 1fr)`,
+                    gap: 10,
+                    marginBottom: 16,
+                  }}
+                >
+                  {products.map((p) => {
+                    const active = selectedProductId === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => setSelectedProductId(p.id)}
+                        style={{
+                          textAlign: "left",
+                          border: `2px solid ${active ? "var(--primary)" : "var(--card-border)"}`,
+                          background: active ? "var(--surface-green)" : "#fff",
+                          borderRadius: 12,
+                          padding: "12px 14px",
+                        }}
+                      >
+                        <div style={{ fontWeight: 800, color: "var(--text-heading)", fontSize: 13.5 }}>
+                          {p.title}
+                        </div>
+                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                          {p.duration_days} gün
+                        </div>
+                        <div style={{ fontWeight: 800, color: "var(--primary)", marginTop: 6 }}>
+                          {formatKurus(p.price_kurus)}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {error && (
                 <div style={{ color: "var(--danger)", fontSize: 13, marginBottom: 12, fontWeight: 600 }}>

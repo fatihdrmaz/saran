@@ -16,6 +16,7 @@ import { WOUND_PHOTOS_BUCKET, woundPhotoPath, type Database } from "@saran/supab
 import { supabase } from "./supabase";
 
 type WoundRow = Database["public"]["Tables"]["wounds"]["Row"];
+export type PlanProductRow = Database["public"]["Tables"]["plan_products"]["Row"];
 type SubmissionRow = Database["public"]["Tables"]["submissions"]["Row"];
 type PlanRow = Database["public"]["Tables"]["plans"]["Row"];
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
@@ -54,6 +55,19 @@ const CLINICAL_STATUS_LABELS: Record<WoundClinicalStatus, string> = {
 
 export function clinicalStatusLabel(status: WoundClinicalStatus): string {
   return CLINICAL_STATUS_LABELS[status] ?? status;
+}
+
+const PLAN_TYPE_LABELS: Record<PlanType, string> = {
+  [PlanType.ONE_TIME]: "Tek Seferlik",
+  [PlanType.WEEK_1]: "Haftalık Takip",
+  [PlanType.WEEK_2]: "2 Haftalık Takip",
+  [PlanType.WEEK_3]: "3 Haftalık Takip",
+  [PlanType.MONTHLY]: "Aylık Takip",
+};
+
+/** plan.type enum → TR paket başlığı (ürün title'ı yoksa fallback). */
+export function planTypeLabel(type: string): string {
+  return PLAN_TYPE_LABELS[type as PlanType] ?? type;
 }
 
 // ── Yara + gönderim + plan okuma ───────────────────────────────────────────
@@ -179,14 +193,19 @@ export async function getWoundSubmissions(woundId: string): Promise<SubmissionRo
   return data ?? [];
 }
 
+/** Plan + bağlı ürünün başlığı (plans.product_id → plan_products.title). */
+export type PlanWithProduct = PlanRow & {
+  product: Pick<PlanProductRow, "title"> | null;
+};
+
 /** Belirli bir durumdaki ilk planı döner (örn. proposed plan önerisi). */
 export async function getPlanByStatus(
   patientId: string,
   status: PlanStatus,
-): Promise<PlanRow | null> {
+): Promise<PlanWithProduct | null> {
   const { data, error } = await supabase
     .from("plans")
-    .select("*")
+    .select("*, product:plan_products(title)")
     .eq("patient_id", patientId)
     .eq("status", status)
     .order("created_at", { ascending: false })
@@ -194,6 +213,19 @@ export async function getPlanByStatus(
     .maybeSingle();
   if (error) throw error;
   return data ?? null;
+}
+
+// ── Paket ürünleri (Paketler ekranı) ───────────────────────────────────────
+
+/** Satıştaki paket ürünlerini `sort_order` sırasıyla döner (yalnızca aktif). */
+export async function getProducts(): Promise<PlanProductRow[]> {
+  const { data, error } = await supabase
+    .from("plan_products")
+    .select("*")
+    .eq("active", true)
+    .order("sort_order", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
 }
 
 // ── Değerlendirme gönderimi (yara + submission + placeholder foto) ─────────

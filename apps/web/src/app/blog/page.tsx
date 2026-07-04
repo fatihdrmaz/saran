@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/blog" },
 };
 
+// ISR: panelden yayınlanan makaleler 5 dk içinde görünür (deploy gerekmez)
+export const revalidate = 300;
+
 export default async function BlogListPage() {
   const { featured, others } = await fetchBlogList();
 

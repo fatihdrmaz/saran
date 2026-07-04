@@ -22,6 +22,7 @@ import { useAuth } from "../../lib/auth";
 import {
   getWoundOverviews,
   getWoundSubmissions,
+  planTypeLabel,
   woundTypeLabel,
   type WoundOverview,
 } from "../../lib/queries";
@@ -127,7 +128,7 @@ export default function Tracking() {
               ) : null}
               {plan ? (
                 <View style={styles.planRow}>
-                  <Text style={styles.planLabel}>{plan.type}</Text>
+                  <Text style={styles.planLabel}>{planTypeLabel(plan.type)}</Text>
                   <Text style={styles.planDays}>
                     {plan.progress_day != null ? `${plan.progress_day}. gün` : "—"}
                   </Text>

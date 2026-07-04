@@ -20,6 +20,7 @@ const ADMIN: NavItem[] = [
   { href: "/ekip", label: "Ekip · Hemşireler", icon: "M3 20a6 6 0 0 1 12 0M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8" },
   { href: "/blog", label: "Blog", icon: "M5 3h10l4 4v14H5zM14 3v5h5M8 13h8M8 17h5" },
   { href: "/yorumlar", label: "Yorumlar", icon: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" },
+  { href: "/urunler", label: "Ürünler", icon: "M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10" },
 ];
 
 function Icon({ d }: { d: string }) {
