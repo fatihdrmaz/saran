@@ -84,17 +84,18 @@ function toReview(row: ReviewRow, index: number): Review {
 }
 
 /**
- * Yorumları getir (anon, server-side): en yeni 6 kayıt.
+ * Yorumları getir (anon, server-side): en yeni `limit` kayıt (varsayılan 6 —
+ * ana sayfa; /yorumlar sayfası 50 çeker).
  * DB hatası/erişim sorununda boş liste döner (bölüm gizlenir).
  */
-export async function fetchReviews(): Promise<Review[]> {
+export async function fetchReviews(limit = 6): Promise<Review[]> {
   try {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("reviews")
       .select("id, display_name, rating, text, wound_type, duration_label")
       .order("created_at", { ascending: false })
-      .limit(6);
+      .limit(limit);
 
     if (error || !data) return [];
     return (data as ReviewRow[]).map(toReview);

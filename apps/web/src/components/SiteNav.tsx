@@ -13,9 +13,11 @@ const LOCALES = ["TR", "EN", "AR"] as const;
 
 const NAV_LINKS: { label: string; href: string }[] = [
   { label: "Nasıl çalışır", href: "/#nasil-calisir" },
+  { label: "Hizmetler", href: "/hizmetler" },
   { label: "Paketler", href: "/#paketler" },
   { label: "Blog", href: "/blog" },
   { label: "S.S.S.", href: "/#sss" },
+  { label: "İletişim", href: "/iletisim" },
 ];
 
 export function SiteNav() {
@@ -82,7 +84,7 @@ export function SiteNav() {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 30,
+            gap: 22,
             fontSize: 15,
             fontWeight: 600,
           }}

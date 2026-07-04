@@ -94,14 +94,23 @@ export function SiteFooter() {
             >
               Keşfet
             </div>
+            <Link href="/hizmetler" style={linkStyle}>
+              Hizmetler
+            </Link>
             <Link href="/blog" style={linkStyle}>
               Blog
+            </Link>
+            <Link href="/yorumlar" style={linkStyle}>
+              Hasta yorumları
             </Link>
             <Link href="/degerlendirme" style={linkStyle}>
               Ücretsiz değerlendirme
             </Link>
             <Link href="/#sss" style={linkStyle}>
               S.S.S.
+            </Link>
+            <Link href="/iletisim" style={linkStyle}>
+              İletişim
             </Link>
           </nav>
         </div>

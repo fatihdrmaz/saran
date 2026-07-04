@@ -39,11 +39,11 @@ const PRICING_LOGIC: [string, string, boolean][] = [
   ["3 · Onaylarsanız başlar", "Planı beğenirseniz onaylayın, takibiniz başlasın. İstediğiniz an iptal edebilirsiniz.", true],
 ];
 
-const WHO_FOR = [
-  ["Bası yaraları", "Yatağa bağımlı hastalarda dekübit yaralarının takibi."],
-  ["Diyabetik ayak", "Diyabete bağlı ayak ülserlerinde erken müdahale."],
-  ["Cerrahi yaralar", "Ameliyat sonrası dikiş bölgesi bakımının izlenmesi."],
-  ["Yanık yarası", "Yanık bölgesinin iyileşme takibi ve gözlemi."],
+const WHO_FOR: [string, string, string][] = [
+  ["Bası yaraları", "Yatağa bağımlı hastalarda dekübit yaralarının takibi.", "/hizmetler/basi-yarasi"],
+  ["Diyabetik ayak", "Diyabete bağlı ayak ülserlerinde erken müdahale.", "/hizmetler/diyabetik-ayak"],
+  ["Cerrahi yaralar", "Ameliyat sonrası dikiş bölgesi bakımının izlenmesi.", "/hizmetler/cerrahi-yara"],
+  ["Yanık yarası", "Yanık bölgesinin iyileşme takibi ve gözlemi.", "/hizmetler/yanik"],
 ];
 
 /** Güven çubuğu — uydurma istatistik yerine doğrulanabilir, iddiasız vaatler. */
@@ -645,6 +645,14 @@ export default async function HomePage() {
               <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted-alt)", marginTop: 20 }}>
                 Görseller hasta onaylıdır ve mahremiyet için bulanıklaştırılmıştır.
               </p>
+              <p style={{ textAlign: "center", marginTop: 14 }}>
+                <Link
+                  href="/yorumlar"
+                  style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)", textDecoration: "none" }}
+                >
+                  Tüm yorumlar →
+                </Link>
+              </p>
             </>
           )}
         </div>
@@ -655,24 +663,38 @@ export default async function HomePage() {
         <div className="container">
           <SectionHeader eyebrow="Kimler için" title="Hangi yaralarda yardımcı oluyoruz?" />
           <div className="cards-4">
-            {WHO_FOR.map(([title, desc]) => (
-              <article
+            {WHO_FOR.map(([title, desc, href]) => (
+              <Link
                 key={title}
+                href={href}
                 style={{
+                  display: "block",
                   background: "#fff",
                   borderRadius: 18,
                   padding: 24,
                   border: "1px solid var(--card-border)",
                   borderTop: "3px solid var(--primary)",
+                  textDecoration: "none",
                 }}
               >
                 <h3 style={{ fontSize: 17, fontWeight: 800, fontFamily: "var(--font-body)", marginBottom: 6 }}>
                   {title}
                 </h3>
-                <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-muted)" }}>{desc}</p>
-              </article>
+                <p style={{ fontSize: 14, lineHeight: 1.55, color: "var(--text-muted)", marginBottom: 10 }}>{desc}</p>
+                <span style={{ fontSize: 13, fontWeight: 800, color: "var(--primary)" }}>
+                  Ayrıntılı bilgi →
+                </span>
+              </Link>
             ))}
           </div>
+          <p style={{ textAlign: "center", marginTop: 22 }}>
+            <Link
+              href="/hizmetler"
+              style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)", textDecoration: "none" }}
+            >
+              Tüm hizmetlerimizi inceleyin →
+            </Link>
+          </p>
         </div>
       </section>
 

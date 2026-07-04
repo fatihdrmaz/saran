@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 const CONSENT_KEY = "saran-cookie-consent";
@@ -12,6 +12,7 @@ const CONSENT_KEY = "saran-cookie-consent";
  */
 export function CookieBanner() {
   const [visible, setVisible] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     try {
@@ -20,6 +21,23 @@ export function CookieBanner() {
       // localStorage erişilemiyorsa (gizli mod vb.) bandı gösterme.
     }
   }, []);
+
+  // Bant görünürken yüksekliğini `--banner-offset` olarak yayınla ki
+  // yüzen WhatsApp butonu bandın üstüne çıksın (WhatsAppFab bunu dinler).
+  useEffect(() => {
+    if (!visible) return;
+    const root = document.documentElement;
+    const setOffset = () => {
+      const h = bannerRef.current?.offsetHeight ?? 72;
+      root.style.setProperty("--banner-offset", `${h + 8}px`);
+    };
+    setOffset();
+    window.addEventListener("resize", setOffset);
+    return () => {
+      window.removeEventListener("resize", setOffset);
+      root.style.removeProperty("--banner-offset");
+    };
+  }, [visible]);
 
   function accept() {
     try {
@@ -34,6 +52,7 @@ export function CookieBanner() {
 
   return (
     <div
+      ref={bannerRef}
       role="region"
       aria-label="Çerez bildirimi"
       style={{
