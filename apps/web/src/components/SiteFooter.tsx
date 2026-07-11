@@ -91,6 +91,9 @@ export function SiteFooter() {
             <Link href="/degerlendirme" style={linkStyle}>
               Ücretsiz değerlendirme
             </Link>
+            <Link href="/hesabim" style={linkStyle}>
+              Hesabım
+            </Link>
             <Link href="/#sss" style={linkStyle}>
               S.S.S.
             </Link>

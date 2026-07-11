@@ -48,11 +48,15 @@ export default function SubmittedPage() {
         </p>
         <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-muted)", maxWidth: 440, margin: "12px 0 28px" }}>
           Değerlendirmeniz hemşire kuyruğuna alındı. Sonucu e-posta ile
-          bildireceğiz; mobil uygulamadan da takip edebilirsiniz.
+          bildireceğiz; durumunuzu{" "}
+          <Link href="/hesabim" style={{ color: "var(--primary)", fontWeight: 700 }}>
+            Hesabım
+          </Link>{" "}
+          sayfanızdan takip edebilirsiniz.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
           <Link
-            href="/"
+            href="/hesabim"
             style={{
               background: "var(--primary)",
               color: "#fff",
@@ -63,7 +67,7 @@ export default function SubmittedPage() {
               textDecoration: "none",
             }}
           >
-            Ana sayfaya dön
+            Hesabıma git
           </Link>
           <Link
             href="/blog"

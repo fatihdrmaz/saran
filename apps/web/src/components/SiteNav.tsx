@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { getSupabase } from "../lib/supabase";
 
 /**
  * Sabit üst menü — README §6B, §7. Bölümlere kaydırma (anchor) + dil seçici
  * (TR/EN/AR yalnızca UI) + "Ücretsiz değerlendirme" CTA. Mobilde hamburger menü.
+ * Oturum-farkındalıklı: oturum yoksa "Giriş yap", varsa "Hesabım".
  */
 
 const LOCALES = ["TR", "EN", "AR"] as const;
+
+/** Dil seçici şimdilik gizli — çok dillilik gelince geri açılacak (README §10). */
+const SHOW_LANG_SWITCHER = false as boolean;
 
 const NAV_LINKS: { label: string; href: string }[] = [
   { label: "Nasıl çalışır", href: "/#nasil-calisir" },
@@ -23,6 +28,35 @@ const NAV_LINKS: { label: string; href: string }[] = [
 export function SiteNav() {
   const [locale, setLocale] = useState<(typeof LOCALES)[number]>("TR");
   const [open, setOpen] = useState(false);
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    let subscription: { unsubscribe(): void } | null = null;
+    try {
+      const supabase = getSupabase();
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          if (mounted) setAuthed(!!data.session);
+        })
+        .catch(() => {});
+      // NOT: callback SENKRON tutulur (await yok) — deadlock önlemi.
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        setAuthed(!!session);
+      });
+      subscription = data.subscription;
+    } catch {
+      // env eksikse (lokal build) oturumsuz varsayılır; nav yine çalışır.
+    }
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  const accountHref = authed ? "/hesabim" : "/giris";
+  const accountLabel = authed ? "Hesabım" : "Giriş yap";
 
   return (
     <header
@@ -80,38 +114,54 @@ export function SiteNav() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div
-            role="group"
-            aria-label="Dil seçimi"
+          {SHOW_LANG_SWITCHER && (
+            <div
+              role="group"
+              aria-label="Dil seçimi"
+              className="hide-mobile"
+              style={{
+                display: "flex",
+                border: "1px solid var(--card-border)",
+                borderRadius: "var(--radius-pill)",
+                overflow: "hidden",
+                background: "#fff",
+              }}
+            >
+              {LOCALES.map((l) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setLocale(l)}
+                  aria-pressed={locale === l}
+                  style={{
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    padding: "6px 10px",
+                    color: locale === l ? "#fff" : "var(--text-muted)",
+                    background: locale === l ? "var(--primary)" : "transparent",
+                  }}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <Link
+            href={accountHref}
             className="hide-mobile"
             style={{
-              display: "flex",
-              border: "1px solid var(--card-border)",
-              borderRadius: "var(--radius-pill)",
-              overflow: "hidden",
-              background: "#fff",
+              textDecoration: "none",
+              color: "var(--text-body)",
+              fontSize: 15,
+              fontWeight: 700,
+              whiteSpace: "nowrap",
             }}
           >
-            {LOCALES.map((l) => (
-              <button
-                key={l}
-                type="button"
-                onClick={() => setLocale(l)}
-                aria-pressed={locale === l}
-                style={{
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: 12,
-                  fontWeight: 700,
-                  padding: "6px 10px",
-                  color: locale === l ? "#fff" : "var(--text-muted)",
-                  background: locale === l ? "var(--primary)" : "transparent",
-                }}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
+            {accountLabel}
+          </Link>
 
           <Link
             href="/degerlendirme"
@@ -178,6 +228,19 @@ export function SiteNav() {
                 {l.label}
               </Link>
             ))}
+            <Link
+              href={accountHref}
+              onClick={() => setOpen(false)}
+              style={{
+                textDecoration: "none",
+                color: "var(--text-body)",
+                fontWeight: 600,
+                padding: "10px 0",
+                borderBottom: "1px solid var(--card-border)",
+              }}
+            >
+              {accountLabel}
+            </Link>
             <Link
               href="/degerlendirme"
               onClick={() => setOpen(false)}
