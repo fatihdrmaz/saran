@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "./Logo";
+import { NotificationsBell } from "./NotificationsBell";
 import { getSupabase } from "../lib/supabase";
 
 /**
@@ -148,6 +149,9 @@ export function SiteNav() {
               ))}
             </div>
           )}
+
+          {/* Bildirim zili — yalnızca oturum varken; masaüstü + mobil başlıkta görünür. */}
+          {authed && <NotificationsBell />}
 
           <Link
             href={accountHref}

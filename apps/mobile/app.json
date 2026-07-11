@@ -8,10 +8,14 @@
     "scheme": "saran",
     "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon",
-      "supportsTablet": true
+      "bundleIdentifier": "com.yaratakibi.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.yaratakibi.app",
       "adaptiveIcon": {
         "backgroundColor": "#0E7A63",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -30,10 +34,19 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#0E3B31",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 120,
           "android": {
             "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "imageWidth": 120
           }
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Yara fotoğrafınızı seçebilmeniz için galeri erişimi gereklidir. Fotoğraflar şifreli saklanır ve yalnızca atanmış hemşireniz görebilir.",
+          "cameraPermission": "Yaranızın fotoğrafını çekebilmeniz için kamera erişimi gereklidir. Fotoğraflar şifreli saklanır ve yalnızca atanmış hemşireniz görebilir."
         }
       ]
     ],

@@ -3,12 +3,15 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PlanStatus, trackingBadge } from "@saran/shared";
-import { Card, PageHeader, StatCard, StatusBadge } from "../components/ui";
+import { Button, Card, PageHeader, Pill, StatCard, StatusBadge } from "../components/ui";
 import { useAuth } from "../lib/auth";
-import { formatRelative, woundTypeLabel } from "../lib/labels";
+import { formatKurus, formatRelative, woundTypeLabel } from "../lib/labels";
 import {
+  confirmPayment,
+  fetchAwaitingTransfers,
   fetchVisibleWounds,
   nameInitials,
+  type AwaitingTransfer,
   type WoundCard,
 } from "../lib/queries";
 
@@ -16,6 +19,10 @@ export default function TodayPage() {
   const { user } = useAuth();
   const [wounds, setWounds] = useState<WoundCard[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [transfers, setTransfers] = useState<AwaitingTransfer[] | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [transferError, setTransferError] = useState<string | null>(null);
+  const [transferSuccess, setTransferSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -23,10 +30,40 @@ export default function TodayPage() {
     fetchVisibleWounds(user.id)
       .then((w) => active && setWounds(w))
       .catch((e) => active && setError(e.message ?? "Veri yüklenemedi"));
+    fetchAwaitingTransfers(user.id, user.role)
+      .then((t) => active && setTransfers(t))
+      .catch(() => {
+        /* havale kartı sessiz geçilir — ana ekranı bloklamasın */
+      });
     return () => {
       active = false;
     };
   }, [user]);
+
+  const approveTransfer = async (t: AwaitingTransfer) => {
+    if (
+      !window.confirm(
+        `${t.patientName} için ${formatKurus(t.amountKurus)} tutarındaki havale ödemesini onaylayıp planı başlatmak istediğinize emin misiniz?`,
+      )
+    ) {
+      return;
+    }
+    setTransferError(null);
+    setTransferSuccess(null);
+    setConfirmingId(t.paymentId);
+    const res = await confirmPayment(t.paymentId);
+    setConfirmingId(null);
+    if (res.ok) {
+      setTransfers((list) =>
+        (list ?? []).filter((x) => x.paymentId !== t.paymentId),
+      );
+      setTransferSuccess(
+        `${t.patientName} — ödeme onaylandı, plan aktifleştirildi.`,
+      );
+    } else {
+      setTransferError(res.error);
+    }
+  };
 
   const pool = (wounds ?? []).filter((w) => w.assignedNurseId === null);
   const assessmentQueue = (wounds ?? []).filter((w) => {
@@ -87,6 +124,112 @@ export default function TodayPage() {
           <StatCard key={s.label} label={s.label} value={s.value} accent={s.accent} />
         ))}
       </div>
+
+      {((transfers?.length ?? 0) > 0 || transferSuccess || transferError) && (
+        <Card style={{ marginBottom: 24 }}>
+          <h2
+            style={{
+              fontSize: 17,
+              fontWeight: 800,
+              color: "var(--text-heading)",
+              marginBottom: 14,
+            }}
+          >
+            Ödeme onayı bekleyen havaleler
+          </h2>
+
+          {transferSuccess && (
+            <div
+              style={{
+                background: "var(--surface-green)",
+                color: "var(--primary)",
+                borderRadius: 12,
+                padding: "10px 14px",
+                marginBottom: 12,
+                fontWeight: 700,
+                fontSize: 13.5,
+              }}
+            >
+              {transferSuccess}
+            </div>
+          )}
+          {transferError && (
+            <div
+              style={{
+                background: "var(--warning-bg)",
+                color: "var(--warning-text)",
+                borderRadius: 12,
+                padding: "10px 14px",
+                marginBottom: 12,
+                fontWeight: 600,
+                fontSize: 13.5,
+              }}
+            >
+              {transferError}
+            </div>
+          )}
+
+          {(transfers?.length ?? 0) > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {(transfers ?? []).map((t) => (
+                <div
+                  key={t.paymentId}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    flexWrap: "wrap",
+                    border: "1px solid var(--card-border)",
+                    borderLeft: "4px solid var(--warm)",
+                    borderRadius: 12,
+                    padding: "12px 14px",
+                    background: "var(--surface)",
+                  }}
+                >
+                  <span
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 999,
+                      background: "var(--surface-green)",
+                      color: "var(--primary)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      flexShrink: 0,
+                    }}
+                  >
+                    {nameInitials(t.patientName)}
+                  </span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div style={{ fontWeight: 700, color: "var(--text-heading)" }}>
+                      {t.patientName}
+                    </div>
+                    <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+                      {formatKurus(t.amountKurus)} · Bildirim:{" "}
+                      {formatRelative(t.createdAt)}
+                    </div>
+                  </div>
+                  <Pill bg="#fdebd8" fg="#c07a2e">
+                    Havale
+                  </Pill>
+                  <Button
+                    onClick={() => approveTransfer(t)}
+                    disabled={confirmingId !== null}
+                    style={{ padding: "9px 14px", fontSize: 13 }}
+                  >
+                    {confirmingId === t.paymentId
+                      ? "Onaylanıyor…"
+                      : "Ödemeyi onayla ve planı başlat"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       <Card>
         <div

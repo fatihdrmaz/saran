@@ -10,6 +10,7 @@ import {
   AppointmentStatus,
   type CareTemplateCategory,
   PLAN_DURATION_DAYS,
+  PaymentStatus,
   PlanStatus,
   type PlanType,
 } from "@saran/shared";
@@ -323,6 +324,104 @@ export async function fetchNursePayments(
     planType: (p.plan?.type as PlanType) ?? null,
     patientName: p.patient?.profile?.full_name ?? "Hasta",
   }));
+}
+
+/** Onay bekleyen havale bildirimi (Bugün ekranı bölüm kartı satırı). */
+export interface AwaitingTransfer {
+  paymentId: string;
+  planId: string;
+  patientId: string;
+  amountKurus: number;
+  createdAt: string;
+  patientName: string;
+}
+
+type AwaitingTransferJoin = Pick<
+  PaymentRow,
+  "id" | "plan_id" | "patient_id" | "amount_kurus" | "created_at"
+> & {
+  plan: Pick<PlanRow, "proposed_by_nurse_id"> | null;
+  patient: { profile: Pick<ProfileRow, "full_name"> | null } | null;
+};
+
+/**
+ * Onay bekleyen havale/EFT bildirimleri (status=awaiting_approval).
+ * Hemşire yalnızca kendi önerdiği planların ödemelerini görür;
+ * admin (role="admin") hepsini görür. Yeni → eski.
+ */
+export async function fetchAwaitingTransfers(
+  nurseId: string,
+  role?: string,
+): Promise<AwaitingTransfer[]> {
+  const supabase = getSupabase();
+  let query = supabase
+    .from("payments")
+    .select(
+      `id, plan_id, patient_id, amount_kurus, created_at,
+       plan:plans!payments_plan_id_fkey!inner ( proposed_by_nurse_id ),
+       patient:patients!payments_patient_id_fkey ( profile:profiles!patients_id_fkey ( full_name ) )`,
+    )
+    .eq("status", PaymentStatus.AWAITING_APPROVAL)
+    .order("created_at", { ascending: false });
+  if (role !== "admin") query = query.eq("plan.proposed_by_nurse_id", nurseId);
+  const { data, error } = await query;
+  if (error) throw error;
+  return ((data ?? []) as unknown as AwaitingTransferJoin[]).map((p) => ({
+    paymentId: p.id,
+    planId: p.plan_id,
+    patientId: p.patient_id,
+    amountKurus: p.amount_kurus,
+    createdAt: p.created_at,
+    patientName: p.patient?.profile?.full_name ?? "Hasta",
+  }));
+}
+
+/**
+ * Havale ödemesini onayla (Edge Function: confirm-payment).
+ * Başarı: payment → paid, plan → active. Yetki: planı öneren hemşire veya
+ * admin; aksi halde 403 gövdesindeki Türkçe mesaj döndürülür.
+ * Fırlatmaz — {ok:true} veya {ok:false, error} döndürür.
+ */
+export async function confirmPayment(
+  paymentId: string,
+): Promise<{ ok: true; planId: string | null } | { ok: false; error: string }> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase.functions.invoke("confirm-payment", {
+      body: { paymentId },
+    });
+    if (error) {
+      // FunctionsHttpError: asıl Türkçe mesaj yanıt gövdesinde (error.context).
+      let message = "Ödeme onaylanamadı. Lütfen tekrar deneyin.";
+      const ctx = (error as { context?: unknown }).context;
+      if (ctx instanceof Response) {
+        try {
+          const body = (await ctx.json()) as { error?: string } | null;
+          if (body?.error) message = body.error;
+        } catch {
+          /* gövde okunamadı — genel mesaj kalır */
+        }
+      } else if (error.message) {
+        message = error.message;
+      }
+      return { ok: false, error: message };
+    }
+    const body = data as
+      | { ok?: boolean; planId?: string; status?: string; error?: string }
+      | null;
+    if (!body?.ok) {
+      return {
+        ok: false,
+        error: body?.error ?? "Ödeme onaylanamadı. Lütfen tekrar deneyin.",
+      };
+    }
+    return { ok: true, planId: body.planId ?? null };
+  } catch {
+    return {
+      ok: false,
+      error: "Sunucuya ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+    };
+  }
 }
 
 /** Bir hastanın ödemeleri (aktif hasta sekmesi). */

@@ -12,8 +12,9 @@ import {
   type PlanStatus,
   type WoundClinicalStatus,
 } from "@saran/shared";
-import { WOUND_PHOTOS_BUCKET, woundPhotoPath, type Database } from "@saran/supabase";
+import { type Database } from "@saran/supabase";
 import { supabase } from "./supabase";
+import { uploadWoundPhoto, type PickedPhoto } from "./photo";
 
 type WoundRow = Database["public"]["Tables"]["wounds"]["Row"];
 export type PlanProductRow = Database["public"]["Tables"]["plan_products"]["Row"];
@@ -228,11 +229,13 @@ export async function getProducts(): Promise<PlanProductRow[]> {
   return data ?? [];
 }
 
-// ── Değerlendirme gönderimi (yara + submission + placeholder foto) ─────────
+// ── Değerlendirme gönderimi (yara + submission + gerçek foto) ──────────────
 
 export interface CreateAssessmentInput {
   patientId: string;
   type: WoundType;
+  /** Kamera/galeriden seçilen gerçek yara fotoğrafı (zorunlu). */
+  photo: PickedPhoto;
   region?: string | null;
   painLevel?: PainLevel;
   exudate?: ExudateLevel | null;
@@ -240,11 +243,9 @@ export interface CreateAssessmentInput {
 }
 
 /**
- * Ücretsiz değerlendirme: yara + ilk gönderim oluşturur.
- *
- * NOT: expo-image-picker KURULU DEĞİL — gerçek kamera/galeri eklenemez.
- * Bu yüzden storage'a küçük bir placeholder blob yüklenir ve image_path olarak
- * o yol kaydedilir. Gerçek görsel akışı için aşağıdaki TODO'ya bakın.
+ * Ücretsiz değerlendirme: yara + ilk gönderim oluşturur. Seçilen gerçek
+ * fotoğraf storage'a yüklenir; yüklenen yol `image_path` olarak kaydedilir.
+ * Fotoğraf yüklenemezse hata fırlatılır (fotoğrafsız değerlendirme yok).
  */
 export async function createAssessment(
   input: CreateAssessmentInput,
@@ -262,24 +263,7 @@ export async function createAssessment(
 
   if (woundError) throw woundError;
 
-  // TODO: expo-image-picker kurulunca gerçek kamera/galeri görselini yükle.
-  // Şimdilik fotoğraf yer tutucusu: storage'a küçük bir placeholder blob koy.
-  const fileName = `placeholder-${Date.now()}.txt`;
-  const imagePath = woundPhotoPath(wound.id, fileName);
-  const placeholder = new Blob(
-    ["saran placeholder — expo-image-picker kurulu degil"],
-    { type: "text/plain" },
-  );
-
-  const { error: uploadError } = await supabase.storage
-    .from(WOUND_PHOTOS_BUCKET)
-    .upload(imagePath, placeholder, { upsert: true });
-
-  // Yükleme başarısız olsa bile (örn. RLS/storage), submission yine kaydedilir —
-  // image_path placeholder yolu olarak tutulur.
-  if (uploadError) {
-    console.warn("[saran] placeholder foto yüklenemedi:", uploadError.message);
-  }
+  const imagePath = await uploadWoundPhoto(wound.id, input.photo);
 
   const { data: submission, error: subError } = await supabase
     .from("submissions")
@@ -302,36 +286,22 @@ export async function createAssessment(
 
 export interface CreateSubmissionInput {
   woundId: string;
+  /** Kamera/galeriden seçilen gerçek yara fotoğrafı (zorunlu). */
+  photo: PickedPhoto;
   painLevel?: PainLevel;
   exudate?: ExudateLevel | null;
   patientNote?: string | null;
 }
 
 /**
- * MEVCUT bir yaraya yeni gönderim ekler (yeni fotoğraf/takip).
- *
- * NOT: expo-image-picker KURULU DEĞİL (createAssessment ile aynı kural).
- * Bu yüzden storage'a küçük bir placeholder blob yüklenir ve image_path olarak
- * o yol kaydedilir. Yükleme başarısız olsa bile gönderim yine kaydedilir.
+ * MEVCUT bir yaraya yeni gönderim ekler (yeni fotoğraf/takip). Seçilen gerçek
+ * fotoğraf storage'a yüklenir; yüklenemezse hata fırlatılır (fotoğrafsız
+ * gönderim yok).
  */
 export async function createSubmission(
   input: CreateSubmissionInput,
 ): Promise<{ submissionId: string }> {
-  // TODO: expo-image-picker kurulunca gerçek kamera/galeri görselini yükle.
-  const fileName = `placeholder-${Date.now()}.txt`;
-  const imagePath = woundPhotoPath(input.woundId, fileName);
-  const placeholder = new Blob(
-    ["saran placeholder — expo-image-picker kurulu degil"],
-    { type: "text/plain" },
-  );
-
-  const { error: uploadError } = await supabase.storage
-    .from(WOUND_PHOTOS_BUCKET)
-    .upload(imagePath, placeholder, { upsert: true });
-
-  if (uploadError) {
-    console.warn("[saran] placeholder foto yüklenemedi:", uploadError.message);
-  }
+  const imagePath = await uploadWoundPhoto(input.woundId, input.photo);
 
   const { data: submission, error } = await supabase
     .from("submissions")

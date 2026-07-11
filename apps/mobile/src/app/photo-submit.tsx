@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { Image } from "expo-image";
 import { colors, radius, spacing } from "@saran/tokens";
 import { ExudateLevel, isTrackingUnlocked, PainLevel } from "@saran/shared";
 import {
@@ -11,11 +12,11 @@ import {
   InfoBanner,
   ScreenContainer,
   TextArea,
-  WoundPhoto,
 } from "../components";
 import { sansFont } from "../lib/theme";
 import { useAuth } from "../lib/auth";
 import { createSubmission, getWoundDetail, type WoundDetail } from "../lib/queries";
+import { pickWoundPhoto, type PickedPhoto } from "../lib/photo";
 
 const painLevelOptions: { value: PainLevel; label: string }[] = [
   { value: PainLevel.NONE, label: "Yok" },
@@ -40,12 +41,16 @@ export default function PhotoSubmit() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  // expo-image-picker KURULU DEĞİL → "fotoğraf seçildi" simülasyonu; storage'a
-  // placeholder yüklenir (bkz. createSubmission). TODO: gerçek görsel seçici.
-  const [hasPhoto, setHasPhoto] = useState(false);
+  // Kamera/galeriden seçilen GERÇEK fotoğraf (bkz. lib/photo.ts).
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [pain, setPain] = useState<PainLevel | null>(null);
   const [exudate, setExudate] = useState<ExudateLevel | null>(null);
   const [note, setNote] = useState("");
+
+  const onPickPhoto = async () => {
+    const picked = await pickWoundPhoto();
+    if (picked) setPhoto(picked);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -70,11 +75,12 @@ export default function PhotoSubmit() {
   const unlocked = isTrackingUnlocked(detail?.plan?.status);
 
   async function handleSubmit() {
-    if (!wound) return;
+    if (!wound || !photo) return;
     setSubmitting(true);
     try {
       await createSubmission({
         woundId: wound.id,
+        photo,
         painLevel: pain ?? PainLevel.NONE,
         exudate,
         patientNote: note.trim() ? note.trim() : null,
@@ -136,11 +142,21 @@ export default function PhotoSubmit() {
         Yaranızın güncel halini paylaşın; hemşireniz değerlendirsin.
       </Body>
 
-      {hasPhoto ? (
-        <WoundPhoto height={200} showReveal label="Yüklenen fotoğraf" />
+      {photo ? (
+        <View>
+          <Image source={{ uri: photo.uri }} style={styles.preview} contentFit="cover" />
+          <Text style={styles.fileName} numberOfLines={1}>
+            {photo.fileName}
+          </Text>
+          <Button
+            label="Fotoğrafı değiştir"
+            variant="secondary"
+            onPress={onPickPhoto}
+            style={styles.changeBtn}
+          />
+        </View>
       ) : (
-        <Pressable style={styles.uploader} onPress={() => setHasPhoto(true)}>
-          <Text style={styles.uploaderIcon}>📷</Text>
+        <Pressable style={styles.uploader} onPress={onPickPhoto}>
           <Text style={styles.uploaderTitle}>Fotoğraf çek veya yükle</Text>
           <Text style={styles.uploaderSub}>Kamera · Galeri</Text>
         </Pressable>
@@ -165,7 +181,7 @@ export default function PhotoSubmit() {
 
       <Button
         label="Hemşireye gönder"
-        disabled={!hasPhoto}
+        disabled={!photo || submitting}
         loading={submitting}
         onPress={handleSubmit}
         style={styles.cta}
@@ -190,9 +206,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     backgroundColor: colors.surface,
   },
-  uploaderIcon: { fontSize: 36 },
   uploaderTitle: { fontFamily: sansFont, color: colors.textHeading, fontWeight: "700", fontSize: 15 },
   uploaderSub: { fontFamily: sansFont, color: colors.textMuted, fontSize: 12 },
+  preview: { height: 200, borderRadius: radius.md, backgroundColor: colors.surface },
+  fileName: { fontFamily: sansFont, color: colors.textMuted, fontSize: 12, marginTop: spacing.sm },
+  changeBtn: { marginTop: spacing.md },
   label: { fontFamily: sansFont, color: colors.textBody, fontWeight: "700", fontSize: 14, marginTop: spacing.xl, marginBottom: spacing.md },
   noteWrap: { marginTop: spacing.xl },
   cta: { marginTop: spacing.lg },

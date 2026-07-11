@@ -471,6 +471,7 @@ export type Database = {
           amount_kurus: number
           created_at: string
           id: string
+          method: string
           paid_at: string | null
           patient_id: string
           plan_id: string
@@ -482,6 +483,7 @@ export type Database = {
           amount_kurus: number
           created_at?: string
           id?: string
+          method?: string
           paid_at?: string | null
           patient_id: string
           plan_id: string
@@ -493,6 +495,7 @@ export type Database = {
           amount_kurus?: number
           created_at?: string
           id?: string
+          method?: string
           paid_at?: string | null
           patient_id?: string
           plan_id?: string

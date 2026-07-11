@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Alert, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, spacing } from "@saran/tokens";
@@ -12,6 +13,7 @@ import {
 } from "../../components";
 import { sansFont } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
+import { supabase } from "../../lib/supabase";
 
 /** README §6A-19: Profil — kullanıcı kartı, istatistikler, menü, Acil yardım. */
 export default function Profile() {
@@ -22,9 +24,63 @@ export default function Profile() {
   const fullName = user?.user_metadata?.full_name ?? "Kullanıcı";
   const phone = user?.user_metadata?.phone ?? user?.email ?? "";
 
+  const [deleting, setDeleting] = useState(false);
+
   const onSignOut = async () => {
     await signOut();
     router.replace("/onboarding");
+  };
+
+  // Hesap silme: delete-account Edge Function'ı tüm verileri + fotoğrafları
+  // kalıcı olarak siler. İki aşamalı onay sonrası çağrılır.
+  const deleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.functions.invoke("delete-account", {
+        body: { confirm: "HESABIMI SIL" },
+      });
+      if (error) throw error;
+      await signOut();
+      router.replace("/onboarding");
+      Alert.alert(
+        "Hesabınız silindi",
+        "KVKK kapsamında verileriniz kalıcı olarak silindi. Sağlıklı günler dileriz.",
+      );
+    } catch (e) {
+      Alert.alert(
+        "Hesap silinemedi",
+        (e as Error)?.message ??
+          "Bir hata oluştu. Lütfen daha sonra tekrar deneyin veya bizimle iletişime geçin.",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const onDeleteAccount = () => {
+    if (deleting) return;
+    Alert.alert(
+      "Emin misiniz?",
+      "Tüm verileriniz ve fotoğraflarınız kalıcı olarak silinir. KVKK kapsamında verileriniz kalıcı olarak silinir.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: "Devam et",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Bu işlem GERİ ALINAMAZ",
+              "Hesabınız, yara kayıtlarınız ve fotoğraflarınız kalıcı olarak silinecek. Onaylıyor musunuz?",
+              [
+                { text: "Vazgeç", style: "cancel" },
+                { text: "Hesabımı sil", style: "destructive", onPress: () => void deleteAccount() },
+              ],
+            );
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -59,6 +115,15 @@ export default function Profile() {
         <View style={styles.section}>
           <Button label="Acil yardım" variant="danger" icon="🚨" onPress={() => router.push("/emergency")} />
           <Button label="Çıkış yap" variant="ghost" onPress={onSignOut} style={styles.logout} />
+          <View style={styles.deleteRow}>
+            <ListRow
+              title={deleting ? "Hesabınız siliniyor..." : "Hesabımı sil"}
+              subtitle="KVKK kapsamında verileriniz kalıcı olarak silinir"
+              danger
+              chevron={false}
+              onPress={onDeleteAccount}
+            />
+          </View>
         </View>
       </ScreenContainer>
     </View>
@@ -75,4 +140,5 @@ const styles = StyleSheet.create({
   section: { marginTop: spacing.xl },
   menu: { gap: spacing.sm },
   logout: { marginTop: spacing.sm },
+  deleteRow: { marginTop: spacing.sm },
 });

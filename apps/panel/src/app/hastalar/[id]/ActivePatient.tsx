@@ -15,6 +15,7 @@ import {
   woundTypeLabel,
 } from "../../../lib/labels";
 import {
+  confirmPayment,
   fetchConversationByPatient,
   fetchMessages,
   fetchPatientPayments,
@@ -60,6 +61,9 @@ export function ActivePatient({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSubmissions(wound.woundId).then(setSubmissions).catch(() => {});
@@ -82,6 +86,31 @@ export function ActivePatient({
   const currentHealing = submissions[0]?.healing_percent ?? null;
   const firstSubmission = submissions[submissions.length - 1] ?? null;
   const lastSubmission = submissions[0] ?? null;
+
+  const approvePayment = async (p: PaymentWithMeta) => {
+    if (
+      !window.confirm(
+        `${formatKurus(p.amount_kurus)} tutarındaki havale ödemesini onaylayıp planı başlatmak istediğinize emin misiniz?`,
+      )
+    ) {
+      return;
+    }
+    setPaymentError(null);
+    setPaymentSuccess(null);
+    setConfirmingPaymentId(p.id);
+    const res = await confirmPayment(p.id);
+    setConfirmingPaymentId(null);
+    if (res.ok) {
+      setPaymentSuccess("Ödeme onaylandı — plan aktifleştirildi.");
+      try {
+        setPayments(await fetchPatientPayments(wound.patientId));
+      } catch {
+        /* tazeleme başarısızsa mevcut liste kalır */
+      }
+    } else {
+      setPaymentError(res.error);
+    }
+  };
 
   const send = async () => {
     if (!draft.trim() || !conversationId) return;
@@ -349,6 +378,36 @@ export function ActivePatient({
 
             {tab === "payments" && (
               <div>
+                {paymentSuccess && (
+                  <div
+                    style={{
+                      background: "var(--surface-green)",
+                      color: "var(--primary)",
+                      borderRadius: 12,
+                      padding: "10px 14px",
+                      marginBottom: 12,
+                      fontWeight: 700,
+                      fontSize: 13.5,
+                    }}
+                  >
+                    {paymentSuccess}
+                  </div>
+                )}
+                {paymentError && (
+                  <div
+                    style={{
+                      background: "var(--warning-bg)",
+                      color: "var(--warning-text)",
+                      borderRadius: 12,
+                      padding: "10px 14px",
+                      marginBottom: 12,
+                      fontWeight: 600,
+                      fontSize: 13.5,
+                    }}
+                  >
+                    {paymentError}
+                  </div>
+                )}
                 <div
                   style={{
                     display: "flex",
@@ -402,9 +461,28 @@ export function ActivePatient({
                             {formatDate(p.paid_at ?? p.created_at)}
                           </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 12,
+                            flexWrap: "wrap",
+                            justifyContent: "flex-end",
+                          }}
+                        >
                           <span style={{ fontWeight: 800 }}>{formatKurus(p.amount_kurus)}</span>
                           <StatusBadge status={b.status} label={b.label} />
+                          {p.status === PaymentStatus.AWAITING_APPROVAL && (
+                            <Button
+                              onClick={() => approvePayment(p)}
+                              disabled={confirmingPaymentId !== null}
+                              style={{ padding: "8px 12px", fontSize: 12.5 }}
+                            >
+                              {confirmingPaymentId === p.id
+                                ? "Onaylanıyor…"
+                                : "Ödemeyi onayla ve planı başlat"}
+                            </Button>
+                          )}
                         </div>
                       </div>
                     );

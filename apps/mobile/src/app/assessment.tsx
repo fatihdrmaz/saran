@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useRouter } from "expo-router";
+import { Image } from "expo-image";
 import { colors, radius, spacing } from "@saran/tokens";
 import { PainLevel, WoundType } from "@saran/shared";
 import {
@@ -12,10 +13,10 @@ import {
   ScreenContainer,
   TextArea,
   TextField,
-  WoundPhoto,
 } from "../components";
 import { sansFont } from "../lib/theme";
 import { createAssessment, woundTypeLabel } from "../lib/queries";
+import { pickWoundPhoto, type PickedPhoto } from "../lib/photo";
 import { useAuth } from "../lib/auth";
 
 const woundTypeOptions: { value: WoundType; label: string; desc: string }[] = [
@@ -37,21 +38,27 @@ export default function Assessment() {
   const router = useRouter();
   const { user } = useAuth();
   const [type, setType] = useState<WoundType | null>(null);
-  const [hasPhoto, setHasPhoto] = useState(false);
+  const [photo, setPhoto] = useState<PickedPhoto | null>(null);
   const [region, setRegion] = useState("");
   const [pain, setPain] = useState<PainLevel | null>(null);
   const [note, setNote] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const onPickPhoto = async () => {
+    const picked = await pickWoundPhoto();
+    if (picked) setPhoto(picked);
+  };
+
   const onSubmit = async () => {
-    if (!type || !hasPhoto || !user) return;
+    if (!type || !photo || !user) return;
     setLoading(true);
     setError(null);
     try {
       await createAssessment({
         patientId: user.id,
         type,
+        photo,
         region: region.trim() || null,
         painLevel: pain ?? PainLevel.NONE,
         patientNote: note.trim() || null,
@@ -75,24 +82,25 @@ export default function Assessment() {
 
       <Heading style={styles.title}>Yara fotoğrafını ekleyin</Heading>
 
-      {hasPhoto ? (
-        <WoundPhoto height={200} showReveal label="Yüklenen fotoğraf" />
+      {photo ? (
+        <View>
+          <Image source={{ uri: photo.uri }} style={styles.preview} contentFit="cover" />
+          <Text style={styles.fileName} numberOfLines={1}>
+            {photo.fileName}
+          </Text>
+          <Button
+            label="Fotoğrafı değiştir"
+            variant="secondary"
+            onPress={onPickPhoto}
+            style={styles.changeBtn}
+          />
+        </View>
       ) : (
-        <Pressable style={styles.uploader} onPress={() => setHasPhoto(true)}>
-          <Text style={styles.uploaderIcon}>📷</Text>
+        <Pressable style={styles.uploader} onPress={onPickPhoto}>
           <Text style={styles.uploaderTitle}>Fotoğraf çek veya yükle</Text>
           <Text style={styles.uploaderSub}>Kamera · Galeri</Text>
         </Pressable>
       )}
-
-      {/* TODO: expo-image-picker kurulu degil — gerçek kamera/galeri eklenemiyor.
-          Şimdilik placeholder foto gönderilir (bkz. createAssessment). */}
-      {hasPhoto ? (
-        <View style={styles.photoActions}>
-          <Button label="Kamera" variant="secondary" full={false} icon="📷" onPress={() => {}} style={styles.flexBtn} />
-          <Button label="Galeri" variant="secondary" full={false} icon="🖼️" onPress={() => {}} style={styles.flexBtn} />
-        </View>
-      ) : null}
 
       <Heading style={styles.title}>Yara tipi</Heading>
       <View style={styles.types}>
@@ -127,7 +135,7 @@ export default function Assessment() {
 
       <Button
         label="Hemşireye gönder"
-        disabled={!hasPhoto || !type || loading}
+        disabled={!photo || !type || loading}
         loading={loading}
         onPress={onSubmit}
         style={styles.cta}
@@ -151,11 +159,11 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     backgroundColor: colors.surface,
   },
-  uploaderIcon: { fontSize: 36 },
   uploaderTitle: { fontFamily: sansFont, color: colors.textHeading, fontWeight: "700", fontSize: 15 },
   uploaderSub: { fontFamily: sansFont, color: colors.textMuted, fontSize: 12 },
-  photoActions: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
-  flexBtn: { flex: 1 },
+  preview: { height: 200, borderRadius: radius.md, backgroundColor: colors.surface },
+  fileName: { fontFamily: sansFont, color: colors.textMuted, fontSize: 12, marginTop: spacing.sm },
+  changeBtn: { marginTop: spacing.md },
   types: { gap: spacing.md },
   typeCard: {
     borderWidth: 1,
