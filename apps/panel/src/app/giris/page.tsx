@@ -87,7 +87,7 @@ export default function LoginPage() {
               style={inputStyle}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="hemsire@saran.app"
+              placeholder="hemsire@yaratakibi.com"
               autoComplete="email"
               required
             />
