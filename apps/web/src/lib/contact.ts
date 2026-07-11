@@ -10,7 +10,7 @@ export const CONTACT = {
   /** PLACEHOLDER — gerçek numara gelince değiştirilecek (görünen biçim). */
   whatsappDisplay: "0500 000 00 00",
   /** PLACEHOLDER — gerçek adres gelince değiştirilecek. */
-  email: "destek@saran.example",
+  email: "destek@yaratakibi.com",
   hours: "Her gün 09.00–21.00",
 } as const;
 
