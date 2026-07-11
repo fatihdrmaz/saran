@@ -110,7 +110,7 @@ export default function Invoice() {
 
       <Card style={styles.receipt}>
         <View style={styles.receiptHead}>
-          <Text style={styles.brand}>SARAN</Text>
+          <Text style={styles.brand}>YARA TAKİBİ</Text>
           <Text style={styles.receiptNo}>Makbuz No: {payment.receipt_no ?? payment.id.slice(0, 8).toUpperCase()}</Text>
         </View>
         <View style={styles.divider} />

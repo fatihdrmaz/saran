@@ -9,12 +9,12 @@ import { fetchReviews } from "../lib/reviews";
 import { fetchProducts } from "../lib/products";
 
 export const metadata: Metadata = {
-  title: "Saran — Uzaktan Yara Bakımı & Takibi",
+  title: "Yara Takibi — Uzaktan Yara Bakımı & Takibi",
   description:
     "Yaranızın fotoğrafını gönderin, uzman yara bakım hemşireniz değerlendirsin ve bakım planı önersin. İlk değerlendirme ücretsiz. Onaylarsanız takip başlar.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Saran — Uzaktan Yara Bakımı & Takibi",
+    title: "Yara Takibi — Uzaktan Yara Bakımı & Takibi",
     description:
       "Fotoğrafınızı gönderin, hemşire değerlendirsin. İlk değerlendirme ücretsiz.",
     type: "website",
@@ -66,7 +66,7 @@ const FAQ: [string, string][] = [
   ],
   [
     "Bu hizmet doktor muayenesinin yerine geçer mi?",
-    "Hayır. Saran uzaktan takip ve danışmanlık hizmetidir; yüz yüze tıbbi muayenenin veya acil tıbbi yardımın yerini tutmaz.",
+    "Hayır. Yara Takibi uzaktan takip ve danışmanlık hizmetidir; yüz yüze tıbbi muayenenin veya acil tıbbi yardımın yerini tutmaz.",
   ],
   [
     "Aboneliğimi istediğim zaman iptal edebilir miyim?",

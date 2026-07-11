@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { HeartLeaf } from "./Icons";
+import { Logo } from "./Logo";
 
 /**
  * Sabit üst menü — README §6B, §7. Bölümlere kaydırma (anchor) + dil seçici
@@ -55,28 +55,7 @@ export function SiteNav() {
             textDecoration: "none",
           }}
         >
-          <span
-            style={{
-              width: 36,
-              height: 36,
-              borderRadius: 10,
-              background: "var(--primary)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <HeartLeaf />
-          </span>
-          <span
-            style={{
-              fontSize: 20,
-              fontWeight: 800,
-              color: "var(--text-heading)",
-            }}
-          >
-            Saran
-          </span>
+          <Logo size={30} />
         </Link>
 
         <div

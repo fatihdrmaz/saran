@@ -7,7 +7,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const FROM = Deno.env.get("NOTIFY_FROM") ?? "Saran <onboarding@resend.dev>";
+const FROM = Deno.env.get("NOTIFY_FROM") ?? "Yara Takibi <onboarding@resend.dev>";
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ ok: false }, 405);
@@ -46,11 +46,11 @@ Deno.serve(async (req) => {
     const tl = ((plan.price_kurus as number) / 100).toLocaleString("tr-TR", {
       minimumFractionDigits: 2,
     });
-    subject = "Bakım planı öneriniz hazır — Saran";
+    subject = "Bakım planı öneriniz hazır — Yara Takibi";
     html = `<p>Merhaba ${escapeHtml(profile?.full_name ?? "")},</p>
 <p>Hemşireniz yaranızı değerlendirdi ve size bir bakım planı önerdi (${tl} ₺).</p>
 <p>Uygulamadan planı inceleyip onaylayabilirsiniz. <strong>Onaylamazsanız ücret alınmaz.</strong></p>
-<p>Sağlıklı günler,<br/>Saran</p>`;
+<p>Sağlıklı günler,<br/>Yara Takibi</p>`;
   } else if (type === "new_message") {
     const { data: msg } = await admin
       .from("messages")
@@ -71,10 +71,10 @@ Deno.serve(async (req) => {
       .eq("id", conv.patient_id)
       .single();
     to = profile?.email ?? null;
-    subject = "Hemşirenizden yeni mesaj — Saran";
+    subject = "Hemşirenizden yeni mesaj — Yara Takibi";
     html = `<p>Merhaba ${escapeHtml(profile?.full_name ?? "")},</p>
 <p>Hemşirenizden yeni bir mesajınız var. Uygulamadan okuyabilirsiniz.</p>
-<p>Sağlıklı günler,<br/>Saran</p>`;
+<p>Sağlıklı günler,<br/>Yara Takibi</p>`;
   } else {
     return json({ ok: false, error: "bilinmeyen type" }, 400);
   }

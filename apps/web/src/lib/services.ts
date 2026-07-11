@@ -36,12 +36,12 @@ export const SERVICES: Service[] = [
     slug: "basi-yarasi",
     name: "Bası Yarası (Yatak Yarası)",
     h1: "Bası Yarası (Yatak Yarası) Uzaktan Takibi",
-    metaTitle: "Bası Yarası (Yatak Yarası) Uzaktan Takibi — Saran",
+    metaTitle: "Bası Yarası (Yatak Yarası) Uzaktan Takibi — Yara Takibi",
     metaDescription:
       "Yatağa bağımlı yakınınızın bası yarasını evde fotoğrafla takip edin. Uzman yara bakım hemşiresi uzaktan değerlendirir, bakım planı önerir. İlk değerlendirme ücretsiz.",
     card: "Yatağa bağımlı hastalarda bası (dekübit) yaralarının evden, fotoğrafla düzenli takibi.",
     intro:
-      "Yatağa bağımlı bir yakınınıza bakıyorsanız bası yarası (dekübit) riskini yakından tanıyorsunuzdur. Saran ile yaranın fotoğrafını evden gönderirsiniz; uzman yara bakım hemşiresi uzaktan değerlendirir ve size uygun bir bakım planı önerir. Hastaneye gitmeden, evde düzenli takip mümkün olur.",
+      "Yatağa bağımlı bir yakınınıza bakıyorsanız bası yarası (dekübit) riskini yakından tanıyorsunuzdur. Yara Takibi ile yaranın fotoğrafını evden gönderirsiniz; uzman yara bakım hemşiresi uzaktan değerlendirir ve size uygun bir bakım planı önerir. Hastaneye gitmeden, evde düzenli takip mümkün olur.",
     why: [
       "Bası yaraları, uzun süre aynı pozisyonda kalan hastalarda derinin sürekli baskı altında kalmasıyla oluşur. Erken evrede küçük bir kızarıklık gibi görünen bölge, düzenli gözlem yapılmazsa kısa sürede derinleşebilir. Bu nedenle yaranın seyrini belirli aralıklarla, aynı açıdan ve karşılaştırılabilir şekilde izlemek büyük önem taşır.",
       "Evde bakım veren aile üyeleri çoğu zaman yaradaki değişimin önemli olup olmadığından emin olamaz. Fotoğrafla uzaktan takip, deneyimli bir yara bakım hemşiresinin gözünün düzenli olarak yaranın üzerinde olmasını sağlar; olumsuz bir gidişat fark edildiğinde sizi yüz yüze sağlık hizmetine yönlendirir.",
@@ -60,7 +60,7 @@ export const SERVICES: Service[] = [
       },
       {
         q: "Hemşire eve gelir mi?",
-        a: "Saran bir uzaktan takip hizmetidir; hemşire değerlendirmeyi gönderdiğiniz fotoğraf ve bilgiler üzerinden çevrimiçi yapar. Yüz yüze müdahale gerektiren durumlarda sizi uygun sağlık kuruluşuna yönlendirir.",
+        a: "Yara Takibi bir uzaktan takip hizmetidir; hemşire değerlendirmeyi gönderdiğiniz fotoğraf ve bilgiler üzerinden çevrimiçi yapar. Yüz yüze müdahale gerektiren durumlarda sizi uygun sağlık kuruluşuna yönlendirir.",
       },
       {
         q: "İlk değerlendirme gerçekten ücretsiz mi?",
@@ -72,12 +72,12 @@ export const SERVICES: Service[] = [
     slug: "diyabetik-ayak",
     name: "Diyabetik Ayak Yarası",
     h1: "Diyabetik Ayak Yarası Uzaktan Takibi",
-    metaTitle: "Diyabetik Ayak Yarası Uzaktan Takibi — Saran",
+    metaTitle: "Diyabetik Ayak Yarası Uzaktan Takibi — Yara Takibi",
     metaDescription:
       "Diyabetik ayak yaranızı evde fotoğrafla takip edin. Uzman yara bakım hemşiresi uzaktan değerlendirir, size özel bakım planı önerir. İlk değerlendirme ücretsiz.",
     card: "Diyabete bağlı ayak yaralarının evden fotoğrafla izlenmesi ve düzenli hemşire değerlendirmesi.",
     intro:
-      "Diyabet yaşayan kişilerde ayakta oluşan küçük bir yara bile yakın takip gerektirir. Saran ile ayak yaranızın fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesini alırsınız. Düzenli fotoğrafla takip sayesinde yaranın seyri kayıt altında kalır.",
+      "Diyabet yaşayan kişilerde ayakta oluşan küçük bir yara bile yakın takip gerektirir. Yara Takibi ile ayak yaranızın fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesini alırsınız. Düzenli fotoğrafla takip sayesinde yaranın seyri kayıt altında kalır.",
     why: [
       "Diyabet, sinir hasarı (his azalması) ve dolaşım bozukluğu nedeniyle ayak yaralarının fark edilmesini ve kapanmasını zorlaştırabilir. His azaldığı için hasta yaranın kötüleştiğini hissetmeyebilir; bu yüzden gözle ve fotoğrafla düzenli kontrol, diyabetik ayak bakımının temel taşlarından biridir.",
       "Fotoğrafla uzaktan takip, yaradaki boyut, renk ve çevre doku değişimlerinin zaman çizelgesi üzerinde karşılaştırılmasını sağlar. Deneyimli bir yara bakım hemşiresi bu değişimleri değerlendirir, günlük bakım ve korunma önerilerinde bulunur ve gerekli gördüğünde sizi vakit kaybetmeden hekime yönlendirir.",
@@ -92,7 +92,7 @@ export const SERVICES: Service[] = [
     faq: [
       {
         q: "Doktor kontrolümün yerine geçer mi?",
-        a: "Hayır. Saran, hekim muayenesinin tamamlayıcısı olan bir uzaktan takip ve danışmanlık hizmetidir. Hemşireniz gerekli gördüğünde sizi hekiminize veya bir sağlık kuruluşuna yönlendirir.",
+        a: "Hayır. Yara Takibi, hekim muayenesinin tamamlayıcısı olan bir uzaktan takip ve danışmanlık hizmetidir. Hemşireniz gerekli gördüğünde sizi hekiminize veya bir sağlık kuruluşuna yönlendirir.",
       },
       {
         q: "Ne sıklıkla fotoğraf göndermeliyim?",
@@ -108,12 +108,12 @@ export const SERVICES: Service[] = [
     slug: "cerrahi-yara",
     name: "Ameliyat Sonrası Yara",
     h1: "Ameliyat Sonrası Yara Takibi",
-    metaTitle: "Ameliyat Sonrası (Cerrahi) Yara Takibi — Saran",
+    metaTitle: "Ameliyat Sonrası (Cerrahi) Yara Takibi — Yara Takibi",
     metaDescription:
       "Ameliyat sonrası dikiş bölgenizi evde fotoğrafla takip ettirin. Uzman yara bakım hemşiresi uzaktan değerlendirir, bakım önerileri sunar. İlk değerlendirme ücretsiz.",
     card: "Ameliyat sonrası dikiş bölgesinin evden fotoğrafla izlenmesi ve iyileşme sürecinin kaydı.",
     intro:
-      "Ameliyattan sonra eve döndüğünüzde dikiş bölgenizin normal seyredip seyretmediğini merak etmek çok doğaldır. Saran ile cerrahi yaranızın fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesini alırsınız. Kontroller arasındaki dönemde de yaranız gözetimsiz kalmaz.",
+      "Ameliyattan sonra eve döndüğünüzde dikiş bölgenizin normal seyredip seyretmediğini merak etmek çok doğaldır. Yara Takibi ile cerrahi yaranızın fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesini alırsınız. Kontroller arasındaki dönemde de yaranız gözetimsiz kalmaz.",
     why: [
       "Cerrahi yaralar çoğunlukla sorunsuz kapanır; ancak ilk haftalarda kızarıklık, akıntı, şişlik veya ısı artışı gibi bulguların erken fark edilmesi önemlidir. Bu değişimler evde çıplak gözle değerlendirilmesi zor olabilen, deneyim gerektiren işaretlerdir.",
       "Fotoğrafla düzenli takip, dikiş bölgesindeki değişimin tarih damgalı bir zaman çizelgesinde izlenmesini sağlar. Hemşireniz bu kaydı değerlendirir, pansuman ve günlük bakım konusunda yol gösterir; beklenenden farklı bir seyir gördüğünde sizi ameliyatınızı yapan ekibe veya bir sağlık kuruluşuna yönlendirir.",
@@ -136,7 +136,7 @@ export const SERVICES: Service[] = [
       },
       {
         q: "Acil bir durum fark edilirse ne olur?",
-        a: "Hemşireniz endişe verici bir bulgu gördüğünde bunu size açıkça iletir ve vakit kaybetmeden ameliyatınızı yapan ekibe veya acil servise başvurmanızı önerir. Saran acil tıbbi yardımın yerini tutmaz.",
+        a: "Hemşireniz endişe verici bir bulgu gördüğünde bunu size açıkça iletir ve vakit kaybetmeden ameliyatınızı yapan ekibe veya acil servise başvurmanızı önerir. Yara Takibi acil tıbbi yardımın yerini tutmaz.",
       },
     ],
   },
@@ -144,12 +144,12 @@ export const SERVICES: Service[] = [
     slug: "venoz-ulser",
     name: "Venöz Ülser (Varis Yarası)",
     h1: "Venöz Ülser (Varis Yarası) Takibi",
-    metaTitle: "Venöz Ülser (Varis Yarası) Uzaktan Takibi — Saran",
+    metaTitle: "Venöz Ülser (Varis Yarası) Uzaktan Takibi — Yara Takibi",
     metaDescription:
       "Bacaktaki venöz ülser (varis yarası) için evden fotoğrafla uzaktan takip. Uzman yara bakım hemşiresi değerlendirir, bakım planı önerir. İlk değerlendirme ücretsiz.",
     card: "Bacakta toplardamar yetmezliğine bağlı yaraların evden fotoğrafla düzenli takibi.",
     intro:
-      "Bacakta, genellikle ayak bileği çevresinde açılan venöz ülserler (varis yaraları) uzun sürebilen, sabır isteyen yaralardır. Saran ile yaranızın fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesi ve bakım önerileriyle süreci düzenli biçimde takip edersiniz.",
+      "Bacakta, genellikle ayak bileği çevresinde açılan venöz ülserler (varis yaraları) uzun sürebilen, sabır isteyen yaralardır. Yara Takibi ile yaranızın fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesi ve bakım önerileriyle süreci düzenli biçimde takip edersiniz.",
     why: [
       "Venöz ülserler, bacak toplardamarlarındaki dolaşım sorunlarına bağlı geliştiği için kapanmaları zaman alabilir ve seyirleri dalgalı olabilir. Haftalar içinde küçülme, duraklamalar veya çevre ciltte değişimler görülebilir; bu seyrin karşılaştırılabilir fotoğraflarla kayıt altına alınması, sürecin doğru okunmasını kolaylaştırır.",
       "Uzaktan takip sayesinde hemşireniz yaranın boyutundaki ve görünümündeki değişimi düzenli değerlendirir; bandaj, cilt bakımı ve günlük yaşam önerileriyle (bacak elevasyonu, yürüyüş düzeni gibi genel bakım konularında) size rehberlik eder. Beklenmeyen bir seyirde sizi hekiminize yönlendirir.",
@@ -180,12 +180,12 @@ export const SERVICES: Service[] = [
     slug: "yanik",
     name: "Yanık Yarası",
     h1: "Yanık Yarası Takibi",
-    metaTitle: "Yanık Yarası Uzaktan Takibi — Saran",
+    metaTitle: "Yanık Yarası Uzaktan Takibi — Yara Takibi",
     metaDescription:
       "Yanık bölgenizi evde fotoğrafla takip ettirin. Uzman yara bakım hemşiresi uzaktan değerlendirir, bakım önerileri sunar. İlk değerlendirme ücretsiz.",
     card: "Ev tipi yanıkların iyileşme sürecinin fotoğrafla izlenmesi ve hemşire değerlendirmesi.",
     intro:
-      "Mutfakta, ütüyle ya da sıcak suyla yaşanan ev tipi yanıklar günlük hayatta sık görülür. Saran ile yanık bölgenizin fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesini alırsınız. İyileşme süreci fotoğraflarla düzenli takip edilir, sorularınız yanıtsız kalmaz.",
+      "Mutfakta, ütüyle ya da sıcak suyla yaşanan ev tipi yanıklar günlük hayatta sık görülür. Yara Takibi ile yanık bölgenizin fotoğrafını evden gönderir, uzman yara bakım hemşiresinin uzaktan değerlendirmesini alırsınız. İyileşme süreci fotoğraflarla düzenli takip edilir, sorularınız yanıtsız kalmaz.",
     why: [
       "Yanık yaralarında ilk günlerdeki görünüm zamanla değişir; su toplaması, soyulma ve renk değişimi sürecin doğal parçaları olabilir. Hangi değişimin beklenen, hangisinin dikkat gerektiren bir işaret olduğunu ayırt etmek deneyim ister. Düzenli fotoğraf takibi bu ayrımın zamanında yapılmasına yardımcı olur.",
       "Uzaktan takipte hemşireniz yanık bölgesinin seyrini değerlendirir, kapama/pansuman ve cilt bakımı konusunda genel önerilerde bulunur; enfeksiyon şüphesi gibi yüz yüze değerlendirme gerektiren durumlarda sizi vakit kaybetmeden sağlık kuruluşuna yönlendirir.",
@@ -204,7 +204,7 @@ export const SERVICES: Service[] = [
       },
       {
         q: "Yanığa ilk anda ne yapmalıyım?",
-        a: "Genel öneri, bölgeyi serin (buzsuz) akan suyla soğutmak ve temiz tutmaktır. İlk anda ciddi bir yanıksa 112'yi arayın veya acil servise gidin. Saran, acil müdahalenin değil sonrasındaki bakım sürecinin takibi içindir.",
+        a: "Genel öneri, bölgeyi serin (buzsuz) akan suyla soğutmak ve temiz tutmaktır. İlk anda ciddi bir yanıksa 112'yi arayın veya acil servise gidin. Yara Takibi, acil müdahalenin değil sonrasındaki bakım sürecinin takibi içindir.",
       },
       {
         q: "İz kalır mı, iz bakımı için destek alır mıyım?",

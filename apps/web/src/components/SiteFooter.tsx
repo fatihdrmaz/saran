@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeartLeaf } from "./Icons";
+import { Logo } from "./Logo";
 
 /** Footer — README §6B (yasal + keşfet linkleri), §11 yasal vurgusu. */
 export function SiteFooter() {
@@ -32,26 +32,11 @@ export function SiteFooter() {
                 marginBottom: 12,
               }}
             >
-              <span
-                style={{
-                  width: 30,
-                  height: 30,
-                  borderRadius: 9,
-                  background: "var(--primary-mid)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <HeartLeaf size={16} />
-              </span>
-              <span style={{ fontSize: 18, fontWeight: 800, color: "#fff" }}>
-                Saran
-              </span>
+              <Logo variant="light" />
             </div>
             <p style={{ fontSize: 13, lineHeight: 1.6 }}>
-              Uzaktan yara bakımı ve takibi. Saran bir uzaktan takip hizmetidir;
-              acil tıbbi yardımın yerini tutmaz.
+              Uzaktan yara bakımı ve takibi. Yara Takibi bir uzaktan takip
+              hizmetidir; acil tıbbi yardımın yerini tutmaz.
             </p>
           </div>
 
@@ -123,7 +108,7 @@ export function SiteFooter() {
             fontSize: 12,
           }}
         >
-          © 2026 Saran · Tüm hakları saklıdır.
+          © 2026 Yara Takibi · Tüm hakları saklıdır.
         </div>
       </div>
     </footer>

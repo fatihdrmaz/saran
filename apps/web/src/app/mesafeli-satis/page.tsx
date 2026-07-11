@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LegalPage, type LegalBlock } from "../../components/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Mesafeli Satış Sözleşmesi — Saran",
+  title: "Mesafeli Satış Sözleşmesi — Yara Takibi",
   description:
-    "Saran uzaktan yara bakım danışmanlık ve takip hizmetlerine ilişkin, 6502 sayılı TKHK ve Mesafeli Sözleşmeler Yönetmeliği'ne uygun mesafeli satış sözleşmesi.",
+    "Yara Takibi uzaktan yara bakım danışmanlık ve takip hizmetlerine ilişkin, 6502 sayılı TKHK ve Mesafeli Sözleşmeler Yönetmeliği'ne uygun mesafeli satış sözleşmesi.",
   alternates: { canonical: "/mesafeli-satis" },
 };
 
@@ -14,17 +14,17 @@ const BLOCKS: LegalBlock[] = [
   },
   { h: "1. Taraflar" },
   {
-    p: "SATICI / HİZMET SAĞLAYICI: [Şirket Unvanı] (\"Saran\"). Adres: [Adres]. MERSİS No: [MERSİS]. E-posta: [E-posta]. Telefon: [Telefon].",
+    p: "SATICI / HİZMET SAĞLAYICI: [Şirket Unvanı] (\"Yara Takibi\"). Adres: [Adres]. MERSİS No: [MERSİS]. E-posta: [E-posta]. Telefon: [Telefon].",
   },
   {
-    p: "ALICI / TÜKETİCİ: Saran web sitesi veya mobil uygulaması üzerinden hizmet satın alan, sipariş sırasında bildirdiği ad-soyad ve iletişim bilgileriyle tanımlanan gerçek kişidir (\"Alıcı\").",
+    p: "ALICI / TÜKETİCİ: Yara Takibi web sitesi veya mobil uygulaması üzerinden hizmet satın alan, sipariş sırasında bildirdiği ad-soyad ve iletişim bilgileriyle tanımlanan gerçek kişidir (\"Alıcı\").",
   },
   { h: "2. Sözleşmenin konusu ve hizmetin tanımı" },
   {
-    p: "İşbu Sözleşme'nin konusu; Alıcı'nın Saran platformu üzerinden elektronik ortamda sipariş verdiği uzaktan yara bakım danışmanlık ve takip hizmetlerinin (tek değerlendirme, aylık takip ve aile planı gibi bakım planları) sunulmasına ilişkin tarafların hak ve yükümlülüklerinin belirlenmesidir.",
+    p: "İşbu Sözleşme'nin konusu; Alıcı'nın Yara Takibi platformu üzerinden elektronik ortamda sipariş verdiği uzaktan yara bakım danışmanlık ve takip hizmetlerinin (tek değerlendirme, aylık takip ve aile planı gibi bakım planları) sunulmasına ilişkin tarafların hak ve yükümlülüklerinin belirlenmesidir.",
   },
   {
-    p: "Hizmet; Alıcı'nın gönderdiği yara fotoğraflarının sertifikalı yara bakım hemşiresi tarafından uzaktan değerlendirilmesini, bakım planı önerilmesini ve onaylanan planın kapsamına göre takip, mesajlaşma ve raporlama hizmetlerini içerir. Saran bir uzaktan takip ve danışmanlık hizmetidir; yüz yüze tıbbi muayenenin, kesin tanının veya acil tıbbi müdahalenin yerini tutmaz.",
+    p: "Hizmet; Alıcı'nın gönderdiği yara fotoğraflarının sertifikalı yara bakım hemşiresi tarafından uzaktan değerlendirilmesini, bakım planı önerilmesini ve onaylanan planın kapsamına göre takip, mesajlaşma ve raporlama hizmetlerini içerir. Yara Takibi bir uzaktan takip ve danışmanlık hizmetidir; yüz yüze tıbbi muayenenin, kesin tanının veya acil tıbbi müdahalenin yerini tutmaz.",
   },
   { h: "3. Fiyat ve ödeme" },
   {
@@ -49,7 +49,7 @@ const BLOCKS: LegalBlock[] = [
     p: "Alıcı, abonelik niteliğindeki planlarını dilediği zaman iptal edebilir; iptal, bir sonraki yenileme dönemi için geçerli olur ve içinde bulunulan dönemin sonuna kadar hizmet sunulmaya devam eder. İptal ve iade koşullarının ayrıntıları İptal ve İade Politikası sayfasında yer alır.",
   },
   {
-    p: "Saran, Alıcı'nın Sözleşme'ye veya Kullanım Koşulları'na aykırı davranması hâlinde hizmeti askıya alma veya Sözleşme'yi feshetme hakkını saklı tutar.",
+    p: "Yara Takibi, Alıcı'nın Sözleşme'ye veya Kullanım Koşulları'na aykırı davranması hâlinde hizmeti askıya alma veya Sözleşme'yi feshetme hakkını saklı tutar.",
   },
   { h: "7. Kişisel verilerin korunması" },
   {

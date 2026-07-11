@@ -4,7 +4,7 @@ import { PageShell } from "../../components/PageShell";
 import { SERVICES } from "../../lib/services";
 
 export const metadata: Metadata = {
-  title: "Hizmetlerimiz — Uzaktan Yara Takibi | Saran",
+  title: "Hizmetlerimiz — Uzaktan Yara Bakımı | Yara Takibi",
   description:
     "Bası yarası, diyabetik ayak, ameliyat sonrası yara, venöz ülser ve yanık takibi. Evden fotoğraf gönderin, uzman yara bakım hemşiresi uzaktan değerlendirsin.",
   alternates: { canonical: "/hizmetler" },
@@ -95,7 +95,7 @@ export default function ServicesIndexPage() {
             marginRight: "auto",
           }}
         >
-          Saran bir uzaktan takip ve danışmanlık hizmetidir; yüz yüze tıbbi
+          Yara Takibi bir uzaktan takip ve danışmanlık hizmetidir; yüz yüze tıbbi
           muayenenin veya acil tıbbi yardımın yerini tutmaz.
         </p>
       </section>

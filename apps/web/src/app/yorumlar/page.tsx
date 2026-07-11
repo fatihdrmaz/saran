@@ -5,9 +5,9 @@ import { Pill } from "../../components/ui";
 import { fetchReviews } from "../../lib/reviews";
 
 export const metadata: Metadata = {
-  title: "Hasta Yorumları — Saran Uzaktan Yara Bakımı",
+  title: "Hasta Yorumları — Yara Takibi Uzaktan Yara Bakımı",
   description:
-    "Saran ile yara takibi yaptıran hastaların gerçek yorumları: bası yarası, diyabetik ayak, cerrahi yara ve daha fazlası. İlk değerlendirme ücretsiz.",
+    "Yara Takibi ile yaralarını uzaktan takip ettiren hastaların gerçek yorumları: bası yarası, diyabetik ayak, cerrahi yara ve daha fazlası. İlk değerlendirme ücretsiz.",
   alternates: { canonical: "/yorumlar" },
 };
 

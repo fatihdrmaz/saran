@@ -16,9 +16,9 @@ const body = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://yaratakibi.com"),
+  metadataBase: new URL("https://www.yaratakibi.com"),
   title: {
-    default: "Saran — Uzaktan Yara Bakım Takibi",
+    default: "Yara Takibi — Uzaktan Yara Bakım Takibi",
     template: "%s",
   },
   description:

@@ -17,7 +17,7 @@ const heading = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Saran — Hemşire & Admin Paneli",
+  title: "Yara Takibi — Hemşire & Admin Paneli",
 };
 
 export default function RootLayout({

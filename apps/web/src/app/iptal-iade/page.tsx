@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import { LegalPage, type LegalBlock } from "../../components/LegalPage";
 
 export const metadata: Metadata = {
-  title: "İptal ve İade Politikası — Saran",
+  title: "İptal ve İade Politikası — Yara Takibi",
   description:
-    "Saran uzaktan yara bakım hizmetlerinde iptal, cayma hakkı ve iade koşulları: ücretsiz ilk değerlendirme, 14 gün cayma hakkı, abonelik iptali ve iade süreçleri.",
+    "Yara Takibi uzaktan yara bakım hizmetlerinde iptal, cayma hakkı ve iade koşulları: ücretsiz ilk değerlendirme, 14 gün cayma hakkı, abonelik iptali ve iade süreçleri.",
   alternates: { canonical: "/iptal-iade" },
 };
 
 const BLOCKS: LegalBlock[] = [
   {
-    p: "Bu politika, Saran üzerinden satın alınan uzaktan yara bakım danışmanlık ve takip hizmetlerine ilişkin iptal, cayma ve iade koşullarını açıklar. Ayrıntılı sözleşme hükümleri için Mesafeli Satış Sözleşmesi sayfasına bakabilirsiniz.",
+    p: "Bu politika, Yara Takibi üzerinden satın alınan uzaktan yara bakım danışmanlık ve takip hizmetlerine ilişkin iptal, cayma ve iade koşullarını açıklar. Ayrıntılı sözleşme hükümleri için Mesafeli Satış Sözleşmesi sayfasına bakabilirsiniz.",
   },
   { h: "Ücretsiz ilk değerlendirme" },
   {

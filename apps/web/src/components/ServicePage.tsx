@@ -10,7 +10,7 @@ import { waLink } from "../lib/contact";
  * İçerik src/lib/services.ts'ten gelir; düzen tüm yara tiplerinde ortaktır.
  */
 
-/** "Saran ile nasıl çalışır" — tüm hizmet sayfalarında ortak 3 adım. */
+/** "Yara Takibi ile nasıl çalışır" — tüm hizmet sayfalarında ortak 3 adım. */
 const HOW_STEPS: [string, string, string][] = [
   [
     "1",
@@ -74,7 +74,7 @@ export function ServicePage({ service }: { service: Service }) {
         </div>
       </section>
 
-      {/* Saran ile nasıl çalışır */}
+      {/* Yara Takibi ile nasıl çalışır */}
       <section
         style={{
           background: "#fff",
@@ -86,7 +86,7 @@ export function ServicePage({ service }: { service: Service }) {
       >
         <div className="container">
           <SectionHeader
-            eyebrow="Saran ile nasıl çalışır"
+            eyebrow="Yara Takibi ile nasıl çalışır"
             title="Üç adımda evden uzaktan takip"
           />
           <div className="cards-3">
@@ -257,7 +257,7 @@ export function ServicePage({ service }: { service: Service }) {
             </a>
           </div>
           <p style={{ fontSize: 12, lineHeight: 1.6, color: "#7fa79c", marginTop: 20 }}>
-            Saran bir uzaktan takip ve danışmanlık hizmetidir; tanı koymaz,
+            Yara Takibi bir uzaktan takip ve danışmanlık hizmetidir; tanı koymaz,
             yüz yüze tıbbi muayenenin veya acil tıbbi yardımın yerini tutmaz.
             Acil durumlarda 112&apos;yi arayın.
           </p>

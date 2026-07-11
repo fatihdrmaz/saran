@@ -72,7 +72,7 @@ export default function LoginPage() {
             className="serif"
             style={{ fontSize: 24, fontWeight: 600, color: "var(--text-heading)" }}
           >
-            Saran Paneli
+            Yara Takibi Paneli
           </h1>
           <p style={{ color: "var(--text-muted)", marginTop: 4, fontSize: 13.5 }}>
             Hemşire & admin girişi

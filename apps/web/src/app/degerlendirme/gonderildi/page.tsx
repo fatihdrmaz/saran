@@ -4,7 +4,7 @@ import { PageShell } from "../../../components/PageShell";
 import { Check } from "../../../components/Icons";
 
 export const metadata: Metadata = {
-  title: "Fotoğrafınız İletildi — Saran",
+  title: "Fotoğrafınız İletildi — Yara Takibi",
   description:
     "Değerlendirmeniz alındı. Uzman hemşiremiz inceliyor; bakım planı öneriniz hazır olduğunda bildirim alacaksınız.",
   alternates: { canonical: "/degerlendirme/gonderildi" },

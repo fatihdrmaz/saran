@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import { LegalPage, type LegalBlock } from "../../components/LegalPage";
 
 export const metadata: Metadata = {
-  title: "KVKK & Gizlilik Politikası — Saran",
+  title: "KVKK & Gizlilik Politikası — Yara Takibi",
   description:
-    "Saran'da kişisel ve sağlık verilerinizin 6698 sayılı KVKK kapsamında nasıl işlendiğini, korunduğunu ve haklarınızı açıklayan gizlilik politikası.",
+    "Yara Takibi'nde kişisel ve sağlık verilerinizin 6698 sayılı KVKK kapsamında nasıl işlendiğini, korunduğunu ve haklarınızı açıklayan gizlilik politikası.",
   alternates: { canonical: "/kvkk" },
 };
 
 const BLOCKS: LegalBlock[] = [
   {
-    p: "Saran olarak kişisel verilerinizin ve özellikle sağlık verilerinizin gizliliğine en yüksek önemi veriyoruz. Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında verilerinizin nasıl işlendiğini açıklamak amacıyla hazırlanmıştır.",
+    p: "Yara Takibi olarak kişisel verilerinizin ve özellikle sağlık verilerinizin gizliliğine en yüksek önemi veriyoruz. Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) kapsamında verilerinizin nasıl işlendiğini açıklamak amacıyla hazırlanmıştır.",
   },
   { h: "Veri sorumlusu" },
   {
-    p: "Bu gizlilik politikası kapsamındaki kişisel verileriniz, hizmeti işleten Saran tarafından veri sorumlusu sıfatıyla işlenmektedir. Veri işleme faaliyetlerine ilişkin sorularınızı destek kanallarımız üzerinden iletebilirsiniz.",
+    p: "Bu gizlilik politikası kapsamındaki kişisel verileriniz, hizmeti işleten Yara Takibi tarafından veri sorumlusu sıfatıyla işlenmektedir. Veri işleme faaliyetlerine ilişkin sorularınızı destek kanallarımız üzerinden iletebilirsiniz.",
   },
   { h: "Hangi verileri topluyoruz?" },
   {

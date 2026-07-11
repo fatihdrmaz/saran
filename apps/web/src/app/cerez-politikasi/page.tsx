@@ -2,15 +2,15 @@ import type { Metadata } from "next";
 import { LegalPage, type LegalBlock } from "../../components/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Çerez Politikası — Saran",
+  title: "Çerez Politikası — Yara Takibi",
   description:
-    "Saran web sitesinde kullanılan çerezler: zorunlu oturum çerezleri ve tercih çerezleri. Analitik çerez kullanılmamaktadır. Çerez yönetimi ve KVKK bilgilendirmesi.",
+    "Yara Takibi web sitesinde kullanılan çerezler: zorunlu oturum çerezleri ve tercih çerezleri. Analitik çerez kullanılmamaktadır. Çerez yönetimi ve KVKK bilgilendirmesi.",
   alternates: { canonical: "/cerez-politikasi" },
 };
 
 const BLOCKS: LegalBlock[] = [
   {
-    p: "Bu politika, Saran web sitesinde hangi çerezlerin (cookie) hangi amaçlarla kullanıldığını ve çerez tercihlerinizi nasıl yönetebileceğinizi açıklar. Çerezler, ziyaret ettiğiniz web siteleri tarafından tarayıcınıza kaydedilen küçük metin dosyalarıdır.",
+    p: "Bu politika, Yara Takibi web sitesinde hangi çerezlerin (cookie) hangi amaçlarla kullanıldığını ve çerez tercihlerinizi nasıl yönetebileceğinizi açıklar. Çerezler, ziyaret ettiğiniz web siteleri tarafından tarayıcınıza kaydedilen küçük metin dosyalarıdır.",
   },
   { h: "Zorunlu çerezler" },
   {

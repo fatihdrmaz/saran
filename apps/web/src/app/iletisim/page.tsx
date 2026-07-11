@@ -4,9 +4,9 @@ import { PageShell } from "../../components/PageShell";
 import { CONTACT, waLink } from "../../lib/contact";
 
 export const metadata: Metadata = {
-  title: "İletişim — Saran Uzaktan Yara Bakımı",
+  title: "İletişim — Yara Takibi Uzaktan Yara Bakımı",
   description:
-    "Saran ekibine WhatsApp veya e-posta ile ulaşın. Her gün 09.00–21.00 arası yanıtlıyoruz. İlk yara değerlendirmesi ücretsizdir.",
+    "Yara Takibi ekibine WhatsApp veya e-posta ile ulaşın. Her gün 09.00–21.00 arası yanıtlıyoruz. İlk yara değerlendirmesi ücretsizdir.",
   alternates: { canonical: "/iletisim" },
 };
 
@@ -177,7 +177,7 @@ export default function ContactPage() {
             Ücretsiz değerlendirme →
           </Link>
           <p style={{ fontSize: 12, color: "var(--text-muted-alt)", marginTop: 16 }}>
-            Saran bir uzaktan takip ve danışmanlık hizmetidir; acil tıbbi
+            Yara Takibi bir uzaktan takip ve danışmanlık hizmetidir; acil tıbbi
             yardımın yerini tutmaz. Acil durumlarda 112&apos;yi arayın.
           </p>
         </div>

@@ -199,7 +199,7 @@ export function EvalForm() {
 
       <p style={{ fontSize: 12, color: "var(--text-muted-alt)", marginTop: 14, maxWidth: 420 }}>
         Görselleriniz uçtan uca şifrelenir ve yalnızca size atanan hemşireniz görebilir.
-        Saran uzaktan takip hizmetidir; acil tıbbi yardımın yerini tutmaz.
+        Yara Takibi uzaktan takip hizmetidir; acil tıbbi yardımın yerini tutmaz.
       </p>
 
       {/* Mobilde önizleme bloğu (masaüstünde sağ kolonda) */}

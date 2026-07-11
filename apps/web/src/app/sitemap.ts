@@ -6,7 +6,7 @@ import { SERVICES } from "../lib/services";
  * NOT: Base URL şimdilik Vercel önizleme alan adına sabitlenmiştir;
  * özel domain alınınca burası (ve robots.ts) güncellenecek.
  */
-const BASE_URL = "https://yaratakibi.com";
+const BASE_URL = "https://www.yaratakibi.com";
 
 /** Statik pazarlama + yasal sayfalar. */
 const STATIC_PATHS = [

@@ -58,7 +58,7 @@ export default function Onboarding() {
   return (
     <View style={[styles.root, { paddingTop: insets.top }]}>
       <View style={styles.topRow}>
-        <Text style={styles.brand}>SARAN</Text>
+        <Text style={styles.brand}>YARA TAKİBİ</Text>
         <Pressable onPress={goRegister}>
           <Text style={styles.skip}>Atla</Text>
         </Pressable>

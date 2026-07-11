@@ -56,7 +56,7 @@ export default function Register() {
   return (
     <ScreenContainer>
       <Kicker>Hesap oluştur</Kicker>
-      <Heading style={styles.title}>Saran'a hoş geldiniz</Heading>
+      <Heading style={styles.title}>Yara Takibi'ne hoş geldiniz</Heading>
       <Body color={colors.textMuted} style={styles.sub}>
         Fotoğrafınızı gönderin, uzman hemşireniz ücretsiz değerlendirsin.
       </Body>

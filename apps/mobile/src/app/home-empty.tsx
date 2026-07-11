@@ -23,7 +23,7 @@ export default function HomeEmpty() {
 
   return (
     <ScreenContainer>
-      <Kicker>SARAN</Kicker>
+      <Kicker>YARA TAKİBİ</Kicker>
       <Hero italic style={styles.hero}>
         Yaranız iyileşene kadar yanınızdayız
       </Hero>

@@ -4,7 +4,7 @@ import { BlurSlot } from "../../components/ui";
 import { EvalForm } from "./EvalForm";
 
 export const metadata: Metadata = {
-  title: "Ücretsiz Yara Değerlendirmesi — Saran",
+  title: "Ücretsiz Yara Değerlendirmesi — Yara Takibi",
   description:
     "Yara fotoğrafınızı gönderin, uzman hemşireniz ücretsiz değerlendirsin. Kart bilgisi istenmez; ödeme yalnızca plan onayında alınır.",
   alternates: { canonical: "/degerlendirme" },

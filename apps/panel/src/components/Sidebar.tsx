@@ -111,13 +111,14 @@ export function Sidebar() {
             alignItems: "center",
             justifyContent: "center",
             fontWeight: 800,
+            fontSize: 13,
           }}
         >
-          S
+          YT
         </div>
         <div>
           <div className="serif" style={{ fontSize: 19, fontWeight: 600 }}>
-            Saran
+            Yara Takibi
           </div>
           <div style={{ fontSize: 11, color: "#7fd8c4" }}>Hemşire Paneli</div>
         </div>

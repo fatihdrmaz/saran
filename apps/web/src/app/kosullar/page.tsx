@@ -2,19 +2,19 @@ import type { Metadata } from "next";
 import { LegalPage, type LegalBlock } from "../../components/LegalPage";
 
 export const metadata: Metadata = {
-  title: "Kullanım Koşulları — Saran",
+  title: "Kullanım Koşulları — Yara Takibi",
   description:
-    "Saran uzaktan yara bakım takip hizmetinin kullanım koşulları: hizmet kapsamı, acil durumlar, ödeme ve iptal, sorumluluk sınırları.",
+    "Yara Takibi uzaktan yara bakım takip hizmetinin kullanım koşulları: hizmet kapsamı, acil durumlar, ödeme ve iptal, sorumluluk sınırları.",
   alternates: { canonical: "/kosullar" },
 };
 
 const BLOCKS: LegalBlock[] = [
   {
-    p: "Saran hizmetini kullanarak aşağıdaki koşulları kabul etmiş olursunuz. Lütfen dikkatlice okuyunuz. Koşulları kabul etmiyorsanız hizmeti kullanmamanızı rica ederiz.",
+    p: "Yara Takibi hizmetini kullanarak aşağıdaki koşulları kabul etmiş olursunuz. Lütfen dikkatlice okuyunuz. Koşulları kabul etmiyorsanız hizmeti kullanmamanızı rica ederiz.",
   },
   { h: "Hizmetin kapsamı" },
   {
-    p: "Saran, uzaktan yara bakım takibi ve danışmanlığı sunan bir dijital platformdur. Hizmetimiz, sertifikalı yara bakım hemşiremiz tarafından sağlanan bir destek hizmetidir; yüz yüze tıbbi muayenenin, kesin tanının veya acil tıbbi müdahalenin yerini tutmaz.",
+    p: "Yara Takibi, uzaktan yara bakım takibi ve danışmanlığı sunan bir dijital platformdur. Hizmetimiz, sertifikalı yara bakım hemşiremiz tarafından sağlanan bir destek hizmetidir; yüz yüze tıbbi muayenenin, kesin tanının veya acil tıbbi müdahalenin yerini tutmaz.",
   },
   { h: "Uygunluk ve hesap" },
   {
@@ -26,7 +26,7 @@ const BLOCKS: LegalBlock[] = [
   },
   { h: "Acil durumlar" },
   {
-    p: "Enfeksiyon belirtileri, yüksek ateş, şiddetli ağrı, kötü koku veya hızla kötüleşen bir yara durumunda derhal en yakın sağlık kuruluşuna başvurmalı ya da 112'yi aramalısınız. Saran bir acil servis değildir ve acil tıbbi yardımın yerini tutmaz.",
+    p: "Enfeksiyon belirtileri, yüksek ateş, şiddetli ağrı, kötü koku veya hızla kötüleşen bir yara durumunda derhal en yakın sağlık kuruluşuna başvurmalı ya da 112'yi aramalısınız. Yara Takibi bir acil servis değildir ve acil tıbbi yardımın yerini tutmaz.",
   },
   { h: "Ödeme ve iptal" },
   {
@@ -38,11 +38,11 @@ const BLOCKS: LegalBlock[] = [
   },
   { h: "Sorumluluğun sınırlandırılması" },
   {
-    p: "Hemşire önerileri, paylaştığınız görseller ve bilgilere dayanan genel bir değerlendirmedir ve kesin tanı niteliği taşımaz. Saran, yanlış veya eksik bilgi nedeniyle ya da önerilerin kişisel olarak uygulanmasından doğabilecek sonuçlardan, yürürlükteki mevzuatın izin verdiği ölçüde sorumlu tutulamaz.",
+    p: "Hemşire önerileri, paylaştığınız görseller ve bilgilere dayanan genel bir değerlendirmedir ve kesin tanı niteliği taşımaz. Yara Takibi, yanlış veya eksik bilgi nedeniyle ya da önerilerin kişisel olarak uygulanmasından doğabilecek sonuçlardan, yürürlükteki mevzuatın izin verdiği ölçüde sorumlu tutulamaz.",
   },
   { h: "Fikri mülkiyet" },
   {
-    p: "Saran markası, içerikleri ve yazılımı dâhil tüm fikri mülkiyet hakları saklıdır. Platform içeriğini izinsiz çoğaltamaz, dağıtamaz veya ticari amaçla kullanamazsınız.",
+    p: "Yara Takibi markası, içerikleri ve yazılımı dâhil tüm fikri mülkiyet hakları saklıdır. Platform içeriğini izinsiz çoğaltamaz, dağıtamaz veya ticari amaçla kullanamazsınız.",
   },
   { h: "Değişiklikler ve yürürlük" },
   {

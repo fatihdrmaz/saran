@@ -5,7 +5,7 @@ import { PageShell } from "../../components/PageShell";
 import { Pill, BlurSlot } from "../../components/ui";
 
 export const metadata: Metadata = {
-  title: "Yara Bakımı Bilgi Blogu — Saran",
+  title: "Yara Bakımı Bilgi Blogu — Yara Takibi",
   description:
     "Uzman yara bakım hemşiremizin kaleminden diyabetik ayak, bası yarası, pansuman ve beslenme üzerine güvenilir rehberler.",
   alternates: { canonical: "/blog" },

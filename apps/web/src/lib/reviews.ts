@@ -68,7 +68,7 @@ function toDurationBadge(raw: string | null): string | null {
 }
 
 function toReview(row: ReviewRow, index: number): Review {
-  const name = row.display_name?.trim() || "Saran hastası";
+  const name = row.display_name?.trim() || "Yara Takibi hastası";
   const gradient = GRADIENTS[index % GRADIENTS.length];
   return {
     id: row.id,
