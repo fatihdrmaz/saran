@@ -58,25 +58,17 @@ export function EvalForm() {
       <div
         style={{
           background: "var(--surface-green-alt)",
-          border: "1px solid #c3e6d5",
-          borderRadius: 14,
-          padding: "14px 16px",
-          display: "flex",
-          gap: 10,
-          alignItems: "center",
+          borderLeft: "4px solid var(--primary)",
+          borderRadius: "0 14px 14px 0",
+          padding: "14px 18px",
           marginBottom: 20,
         }}
       >
-        <span style={{ fontSize: 22 }} aria-hidden>
-          🎁
-        </span>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)" }}>
-            İlk değerlendirme ücretsiz
-          </div>
-          <div style={{ fontSize: 13, color: "#3e7a68" }}>
-            Plan önerilene kadar hiçbir ödeme alınmaz, kart bilgisi istenmez.
-          </div>
+        <div style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)" }}>
+          İlk değerlendirme ücretsiz
+        </div>
+        <div style={{ fontSize: 13, color: "#3e7a68" }}>
+          Plan önerilene kadar hiçbir ödeme alınmaz, kart bilgisi istenmez.
         </div>
       </div>
 
@@ -112,11 +104,13 @@ export function EvalForm() {
             alignItems: "center",
             justifyContent: "center",
             margin: "0 auto 12px",
-            fontSize: 26,
           }}
           aria-hidden
         >
-          📷
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+            <circle cx="12" cy="13" r="4" />
+          </svg>
         </div>
         <div style={{ fontSize: 17, fontWeight: 800, color: "var(--text-heading)" }}>
           {fileName ? fileName : "Fotoğraf seçin veya yükleyin"}

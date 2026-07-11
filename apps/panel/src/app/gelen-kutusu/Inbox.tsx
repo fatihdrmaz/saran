@@ -210,7 +210,7 @@ export function Inbox() {
                     >
                       {m.type === "image" && (
                         <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>
-                          📷 Fotoğraf
+                          Fotoğraf
                         </div>
                       )}
                       {m.content}

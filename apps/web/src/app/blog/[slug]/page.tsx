@@ -155,7 +155,7 @@ export default async function ArticlePage({
                   }}
                 >
                   <div style={{ fontSize: 14, fontWeight: 800, color: "var(--primary)", marginBottom: 6 }}>
-                    💡 Hemşire notu
+                    Hemşire notu
                   </div>
                   <p style={{ fontSize: 16, lineHeight: 1.6, color: "#236b59", margin: 0 }}>{b.text}</p>
                 </aside>

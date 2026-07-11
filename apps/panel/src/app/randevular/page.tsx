@@ -175,9 +175,6 @@ export default function AppointmentsPage() {
                         marginBottom: 8,
                       }}
                     >
-                      <span style={{ fontSize: 18 }}>
-                        {a.type === AppointmentType.VIDEO ? "📹" : "📞"}
-                      </span>
                       <div>
                         <div style={{ fontWeight: 700, color: "var(--text-heading)" }}>
                           {a.patientName}
@@ -215,9 +212,6 @@ export default function AppointmentsPage() {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                      <span style={{ fontSize: 16 }}>
-                        {r.type === AppointmentType.VIDEO ? "📹" : "📞"}
-                      </span>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, color: "var(--text-heading)" }}>
                           {r.patientName}

@@ -55,7 +55,7 @@ export default function TodayPage() {
   return (
     <>
       <PageHeader
-        title={`Günaydın, ${firstName} 👋`}
+        title={`Günaydın, ${firstName}`}
         subtitle={`${today} · Bugünkü işlerin özeti`}
       />
 

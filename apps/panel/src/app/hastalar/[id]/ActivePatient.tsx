@@ -305,7 +305,7 @@ export function ActivePatient({
                       }}
                     >
                       {m.type === "image" && (
-                        <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>📷 Fotoğraf</div>
+                        <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>Fotoğraf</div>
                       )}
                       <div style={{ fontSize: 13.5, lineHeight: 1.45 }}>{m.content}</div>
                       <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4, textAlign: "right" }}>
