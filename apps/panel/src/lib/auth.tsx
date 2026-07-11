@@ -78,18 +78,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = getSupabase();
     let mounted = true;
 
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
-      if (data.session) setUser(await loadPanelUser(data.session.user.id));
-      setLoading(false);
-    });
-
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, s) => {
+    // KRİTİK: onAuthStateChange callback'i içinde supabase sorgusu AWAIT EDİLMEZ —
+    // supabase-js auth kilidi nedeniyle sayfa yenilemede ölümcül kilitlenme yaratır
+    // ("Yükleniyor" da takılma). Profil, callback dışında (macrotask) yüklenir.
+    const applySession = (s: Session | null) => {
       if (!mounted) return;
       setSession(s);
-      setUser(s ? await loadPanelUser(s.user.id) : null);
-    });
+      setLoading(false);
+      if (!s) {
+        setUser(null);
+        return;
+      }
+      setTimeout(() => {
+        loadPanelUser(s.user.id)
+          .then((u) => {
+            if (mounted) setUser(u);
+          })
+          .catch(() => {});
+      }, 0);
+    };
+
+    supabase.auth.getSession().then(({ data }) => applySession(data.session));
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) =>
+      applySession(s),
+    );
 
     return () => {
       mounted = false;
