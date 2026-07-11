@@ -46,6 +46,8 @@ export function Sidebar() {
   const { user, signOut } = useAuth();
   const displayName = user?.fullName || user?.email || "Hemşire";
   const initials = nameInitials(displayName);
+  // Yönetim menüsü yalnızca admin rolüne görünür (hemşire görmez).
+  const isAdmin = user?.role === "admin";
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -128,21 +130,25 @@ export function Sidebar() {
         {MAIN.map(renderItem)}
       </nav>
 
-      <div
-        style={{
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: 0.6,
-          color: "#5e8378",
-          textTransform: "uppercase",
-          padding: "18px 12px 6px",
-        }}
-      >
-        Yönetim
-      </div>
-      <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-        {ADMIN.map(renderItem)}
-      </nav>
+      {isAdmin && (
+        <>
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: 0.6,
+              color: "#5e8378",
+              textTransform: "uppercase",
+              padding: "18px 12px 6px",
+            }}
+          >
+            Yönetim
+          </div>
+          <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {ADMIN.map(renderItem)}
+          </nav>
+        </>
+      )}
 
       <div style={{ marginTop: "auto", padding: "16px 12px 4px" }}>
         <div
