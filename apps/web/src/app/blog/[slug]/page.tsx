@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { fetchArticle, fetchArticleSlugs } from "../../../lib/articles";
 import { PageShell } from "../../../components/PageShell";
 import { Pill, BlurSlot } from "../../../components/ui";
+import { JsonLd, articleJsonLd, breadcrumbJsonLd } from "../../../components/JsonLd";
 
 type Params = { slug: string };
 
@@ -47,6 +48,23 @@ export default async function ArticlePage({
 
   return (
     <PageShell>
+      <JsonLd
+        data={articleJsonLd({
+          title: article.title,
+          intro: article.intro,
+          slug: article.slug,
+          imageUrl: article.imageUrl,
+          publishedAt: article.publishedAt,
+          authorName: article.author.name,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Ana Sayfa", path: "/" },
+          { name: "Blog", path: "/blog" },
+          { name: article.title, path: `/blog/${article.slug}` },
+        ])}
+      />
       <article style={{ maxWidth: 760, margin: "0 auto", padding: "32px 0 48px" }}>
         <div style={{ padding: "0 24px" }}>
           <Link

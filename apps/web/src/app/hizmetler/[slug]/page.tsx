@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SERVICES, getService } from "../../../lib/services";
 import { ServicePage } from "../../../components/ServicePage";
+import { JsonLd, breadcrumbJsonLd, faqJsonLd } from "../../../components/JsonLd";
 
 type Params = { slug: string };
 
@@ -41,5 +42,17 @@ export default async function ServiceSlugPage({
   const service = getService(slug);
   if (!service) notFound();
 
-  return <ServicePage service={service} />;
+  return (
+    <>
+      <JsonLd data={faqJsonLd(service.faq.map((f) => [f.q, f.a] as const))} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Ana Sayfa", path: "/" },
+          { name: "Hizmetler", path: "/hizmetler" },
+          { name: service.name, path: `/hizmetler/${service.slug}` },
+        ])}
+      />
+      <ServicePage service={service} />
+    </>
+  );
 }

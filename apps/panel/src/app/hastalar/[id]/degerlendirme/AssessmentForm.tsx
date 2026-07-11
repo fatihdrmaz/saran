@@ -10,6 +10,7 @@ import {
   StatusBadge,
   WoundPhoto,
 } from "../../../../components/ui";
+import { LiveWoundPhoto } from "../../../../components/LiveWoundPhoto";
 import {
   formatKurus,
   painLevelLabel,
@@ -161,11 +162,15 @@ export function AssessmentForm({
           <h2 style={{ fontSize: 16, fontWeight: 800, color: "var(--text-heading)", marginBottom: 12 }}>
             Gönderilen fotoğraf
           </h2>
-          {/* Havuzdaki hemşire görseli AÇAMAZ — yalnızca atanan. */}
-          <WoundPhoto height={240} cleared={isMine} />
+          {/* Havuzdaki hemşire görseli AÇAMAZ — storage RLS yalnızca atanana imzalı URL verir. */}
+          {submission ? (
+            <LiveWoundPhoto imagePath={submission.image_path} height={240} />
+          ) : (
+            <WoundPhoto height={240} />
+          )}
           {!isMine && (
             <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 8, textAlign: "center" }}>
-              Görseli yalnızca yarayı üstlenen hemşire açabilir.
+              Görseli yalnızca yarayı üstlenen hemşire netleştirebilir. Önce yarayı üstlenin.
             </p>
           )}
 

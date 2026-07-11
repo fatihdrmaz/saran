@@ -5,6 +5,7 @@ import Link from "next/link";
 import { trackingBadge } from "@saran/shared";
 import type { Database } from "@saran/supabase";
 import { Button, Card, StatusBadge } from "../../components/ui";
+import { isWoundImagePath, LiveWoundPhoto } from "../../components/LiveWoundPhoto";
 import { useAuth } from "../../lib/auth";
 import { formatRelative } from "../../lib/labels";
 import {
@@ -208,12 +209,23 @@ export function Inbox() {
                         lineHeight: 1.45,
                       }}
                     >
-                      {m.type === "image" && (
-                        <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>
-                          Fotoğraf
+                      {m.type === "image" && isWoundImagePath(m.content) ? (
+                        <div style={{ minWidth: 180 }}>
+                          <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 6 }}>
+                            Fotoğraf
+                          </div>
+                          <LiveWoundPhoto imagePath={m.content.trim()} height={150} />
                         </div>
+                      ) : (
+                        <>
+                          {m.type === "image" && (
+                            <div style={{ fontSize: 12, opacity: 0.85, marginBottom: 4 }}>
+                              Fotoğraf
+                            </div>
+                          )}
+                          {m.content}
+                        </>
                       )}
-                      {m.content}
                       <div style={{ fontSize: 11, opacity: 0.7, marginTop: 4, textAlign: "right" }}>
                         {formatRelative(m.created_at)}
                       </div>

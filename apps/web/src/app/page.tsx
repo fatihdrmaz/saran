@@ -7,6 +7,7 @@ import { SectionHeader, BlurSlot, Pill } from "../components/ui";
 import { Check } from "../components/Icons";
 import { fetchReviews } from "../lib/reviews";
 import { fetchProducts } from "../lib/products";
+import { JsonLd, faqJsonLd } from "../components/JsonLd";
 
 export const metadata: Metadata = {
   title: "Yara Takibi — Uzaktan Yara Bakımı & Takibi",
@@ -86,6 +87,7 @@ export default async function HomePage() {
 
   return (
     <PageShell>
+      <JsonLd data={faqJsonLd(FAQ)} />
       {/* HERO */}
       <section className="container" style={{ padding: "56px 24px" }}>
         <div className="two-col">

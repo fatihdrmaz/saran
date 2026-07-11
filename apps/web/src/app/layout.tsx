@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Newsreader, Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { CookieBanner } from "../components/CookieBanner";
+import { JsonLd, organizationJsonLd } from "../components/JsonLd";
 
 const heading = Newsreader({
   subsets: ["latin"],
@@ -33,8 +35,11 @@ export default function RootLayout({
   return (
     <html lang="tr" className={`${heading.variable} ${body.variable}`}>
       <body>
+        <JsonLd data={organizationJsonLd} />
         {children}
         <CookieBanner />
+        {/* Vercel Analytics — çerezsiz, KVKK dostu sayfa ölçümü */}
+        <Analytics />
       </body>
     </html>
   );

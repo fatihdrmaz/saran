@@ -35,6 +35,8 @@ export interface Article {
   imageGradient: string;
   /** Supabase storage kapak görseli; yoksa null → gradyan fallback */
   imageUrl: string | null;
+  /** ISO yayın tarihi (JSON-LD için) */
+  publishedAt: string | null;
   author: {
     name: string;
     title: string;
@@ -217,6 +219,7 @@ function toArticle(row: ArticleRow, featured = false): Article {
     readingLabel: `${minutes} dk okuma`,
     featured,
     imageGradient: presentation.gradient,
+    publishedAt: row.published_at ?? null,
     imageUrl: row.image_url ?? null,
     author: AUTHOR,
     body: parseBody(row.body),

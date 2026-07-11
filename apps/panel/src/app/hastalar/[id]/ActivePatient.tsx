@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { PaymentStatus, PlanType } from "@saran/shared";
 import type { Database } from "@saran/supabase";
 import { Button, Card, PageHeader, StatusBadge, WoundPhoto } from "../../../components/ui";
+import { LiveWoundPhoto } from "../../../components/LiveWoundPhoto";
 import {
   clinicalStatusLabel,
   formatDate,
@@ -79,6 +80,8 @@ export function ActivePatient({
     .reverse()
     .map((s) => s.healing_percent ?? 0);
   const currentHealing = submissions[0]?.healing_percent ?? null;
+  const firstSubmission = submissions[submissions.length - 1] ?? null;
+  const lastSubmission = submissions[0] ?? null;
 
   const send = async () => {
     if (!draft.trim() || !conversationId) return;
@@ -182,13 +185,21 @@ export function ActivePatient({
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
               <div>
-                <WoundPhoto height={130} label="İlk gönderim" cleared />
+                {firstSubmission ? (
+                  <LiveWoundPhoto imagePath={firstSubmission.image_path} height={130} label="İlk gönderim" />
+                ) : (
+                  <WoundPhoto height={130} label="İlk gönderim" />
+                )}
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6, textAlign: "center" }}>
-                  İlk · %{submissions[submissions.length - 1]?.healing_percent ?? 0}
+                  İlk · %{firstSubmission?.healing_percent ?? 0}
                 </div>
               </div>
               <div>
-                <WoundPhoto height={130} label="Bugün" cleared />
+                {lastSubmission ? (
+                  <LiveWoundPhoto imagePath={lastSubmission.image_path} height={130} label="Bugün" />
+                ) : (
+                  <WoundPhoto height={130} label="Bugün" />
+                )}
                 <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 6, textAlign: "center" }}>
                   Son · {currentHealing != null ? `%${currentHealing}` : "—"}
                 </div>
@@ -252,10 +263,10 @@ export function ActivePatient({
                         {s.patient_note ?? "—"}
                       </p>
                       <div style={{ marginTop: 8, maxWidth: 200 }}>
-                        <WoundPhoto
+                        <LiveWoundPhoto
+                          imagePath={s.image_path}
                           height={120}
                           label={s.healing_percent != null ? `%${s.healing_percent}` : undefined}
-                          cleared
                         />
                       </div>
                     </div>
@@ -271,10 +282,10 @@ export function ActivePatient({
                 )}
                 {submissions.map((s) => (
                   <div key={s.id}>
-                    <WoundPhoto
+                    <LiveWoundPhoto
+                      imagePath={s.image_path}
                       height={120}
                       label={s.healing_percent != null ? `%${s.healing_percent}` : undefined}
-                      cleared
                     />
                     <div style={{ fontSize: 11.5, color: "var(--text-muted)", marginTop: 6 }}>
                       {formatRelative(s.created_at)}

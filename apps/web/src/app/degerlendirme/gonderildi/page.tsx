@@ -41,10 +41,14 @@ export default function SubmittedPage() {
           <Check size={46} strokeWidth={2.4} />
         </div>
         <h1 style={{ fontSize: 34, fontWeight: 500 }}>Fotoğrafınız iletildi</h1>
-        <p style={{ fontSize: 17, lineHeight: 1.6, color: "var(--text-muted)", maxWidth: 440, margin: "14px 0 28px" }}>
+        <p style={{ fontSize: 17, lineHeight: 1.6, color: "var(--text-muted)", maxWidth: 440, margin: "14px 0 0" }}>
           Uzman hemşiremiz değerlendirmenizi inceliyor. Bakım planı öneriniz hazır
           olduğunda bildirim alacaksınız — onaylarsanız takip başlar. İlk değerlendirme
           için ücret alınmaz.
+        </p>
+        <p style={{ fontSize: 15, lineHeight: 1.6, color: "var(--text-muted)", maxWidth: 440, margin: "12px 0 28px" }}>
+          Değerlendirmeniz hemşire kuyruğuna alındı. Sonucu e-posta ile
+          bildireceğiz; mobil uygulamadan da takip edebilirsiniz.
         </p>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
           <Link

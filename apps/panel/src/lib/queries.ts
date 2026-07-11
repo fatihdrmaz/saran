@@ -174,6 +174,52 @@ export async function claimWound(woundId: string): Promise<void> {
   if (error) throw error;
 }
 
+/* ----------------------------- YARA FOTOĞRAFI (STORAGE) ----------------------------- */
+
+/**
+ * Private `wound-photos` bucket'ından geçici (5 dk) imzalı URL üretir.
+ * Storage RLS: objeyi yalnızca yaraya ATANMIŞ hemşire (veya hasta sahibi/admin)
+ * okuyabilir; havuzdaki (atanmamış) hemşire için hata döner → null.
+ * Eski/mock kayıtlarda obje bulunmayabilir → yine null (çağıran nazik mesaj gösterir).
+ */
+export async function getSignedWoundPhotoUrl(
+  imagePath: string,
+): Promise<string | null> {
+  if (!imagePath) return null;
+  try {
+    const supabase = getSupabase();
+    const { data, error } = await supabase.storage
+      .from("wound-photos")
+      .createSignedUrl(imagePath, 300);
+    if (error || !data?.signedUrl) return null;
+    return data.signedUrl;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * KVKK erişim kaydı: gönderim görseli netleştirildiğinde access_logs'a yazılır.
+ * actor_id = oturumdaki kullanıcı (RLS insert koşulu: actor_id = auth.uid()).
+ * Log hatası görüntülemeyi engellemez (sessiz geçilir).
+ */
+export async function logSubmissionImageView(): Promise<void> {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase.auth.getUser();
+    const actorId = data.user?.id;
+    if (!actorId) return;
+    await supabase.from("access_logs").insert({
+      actor_id: actorId,
+      resource_type: "submission_image",
+      resource_id: null,
+      action: "view",
+    });
+  } catch {
+    /* sessiz — denetim kaydı UX'i bloklamasın */
+  }
+}
+
 export interface CreateAssessmentInput {
   submissionId: string;
   nurseId: string;
