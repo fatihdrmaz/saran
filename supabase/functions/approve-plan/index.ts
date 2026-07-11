@@ -5,6 +5,13 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+
 const PLAN_DURATION_DAYS: Record<string, number | null> = {
   one_time: null,
   week_1: 7,
@@ -15,6 +22,7 @@ const PLAN_DURATION_DAYS: Record<string, number | null> = {
 const VAT_RATE = 0.2;
 
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") {
     return json({ error: "POST bekleniyor" }, 405);
   }
@@ -99,6 +107,6 @@ Deno.serve(async (req) => {
 function json(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...CORS },
   });
 }
