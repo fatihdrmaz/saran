@@ -5,6 +5,7 @@ import { colors } from "@saran/tokens";
 import { PageShell } from "../components/PageShell";
 import { SectionHeader, BlurSlot, Pill } from "../components/ui";
 import { Check } from "../components/Icons";
+import { HeroMockup } from "../components/HeroMockup";
 import { fetchReviews } from "../lib/reviews";
 import { fetchProducts } from "../lib/products";
 import { JsonLd, faqJsonLd } from "../components/JsonLd";
@@ -175,7 +176,7 @@ export default async function HomePage() {
                 border: "1px solid var(--card-border)",
               }}
             >
-              <BlurSlot height={330} radius={16} label="Yara bakım örnek görseli (mahremiyet için bulanık)" />
+              <HeroMockup />
             </div>
           </div>
         </div>
