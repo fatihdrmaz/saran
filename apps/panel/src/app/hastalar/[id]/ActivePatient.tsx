@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { PaymentStatus, PlanType } from "@saran/shared";
+import { useEffect, useMemo, useState } from "react";
+import { PaymentStatus, PlanStatus, PlanType, trackingBadge } from "@saran/shared";
 import type { Database } from "@saran/supabase";
 import { Button, Card, PageHeader, StatusBadge, WoundPhoto } from "../../../components/ui";
 import { LiveWoundPhoto } from "../../../components/LiveWoundPhoto";
@@ -16,10 +16,11 @@ import {
 } from "../../../lib/labels";
 import {
   confirmPayment,
-  fetchConversationByPatient,
   fetchMessages,
-  fetchPatientPayments,
   fetchSubmissions,
+  fetchWoundConversationId,
+  fetchWoundPayments,
+  markConversationRead,
   planProgress,
   sendMessage,
   type PaymentWithMeta,
@@ -47,13 +48,39 @@ const paymentBadge: Record<
   [PaymentStatus.AWAITING_APPROVAL]: { label: "Onay bekliyor", status: "assessment" },
 };
 
+/** Akış öğesi: gönderim + mesaj karışık kronolojisi (yeni → eski). */
+type FeedItem =
+  | { kind: "submission"; at: string; sub: SubmissionRow }
+  | { kind: "message"; at: string; msg: MessageRow };
+
+function pickInitialWoundId(
+  wounds: WoundCard[],
+  initialWoundId: string | null | undefined,
+): string {
+  if (initialWoundId && wounds.some((w) => w.woundId === initialWoundId)) {
+    return initialWoundId;
+  }
+  const active = wounds.find(
+    (w) => (w.latestPlan?.status as PlanStatus) === PlanStatus.ACTIVE,
+  );
+  return active?.woundId ?? wounds[0].woundId;
+}
+
 export function ActivePatient({
-  wound,
+  wounds,
   nurseId,
+  initialWoundId,
 }: {
-  wound: WoundCard;
+  wounds: WoundCard[];
   nurseId: string;
+  initialWoundId?: string | null;
 }) {
+  const [selectedWoundId, setSelectedWoundId] = useState<string>(() =>
+    pickInitialWoundId(wounds, initialWoundId),
+  );
+  const wound =
+    wounds.find((w) => w.woundId === selectedWoundId) ?? wounds[0];
+
   const [tab, setTab] = useState<Tab>("feed");
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [payments, setPayments] = useState<PaymentWithMeta[]>([]);
@@ -65,17 +92,37 @@ export function ActivePatient({
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
 
+  // Yara değişince tüm sekme verileri o YARA için yeniden yüklenir.
   useEffect(() => {
-    fetchSubmissions(wound.woundId).then(setSubmissions).catch(() => {});
-    fetchPatientPayments(wound.patientId).then(setPayments).catch(() => {});
-    fetchConversationByPatient(nurseId, wound.patientId)
-      .then(async (conv) => {
-        if (!conv) return;
-        setConversationId(conv.id);
-        setMessages(await fetchMessages(conv.id));
+    let active = true;
+    setSubmissions([]);
+    setPayments([]);
+    setMessages([]);
+    setConversationId(null);
+    setPaymentError(null);
+    setPaymentSuccess(null);
+
+    fetchSubmissions(selectedWoundId)
+      .then((s) => active && setSubmissions(s))
+      .catch(() => {});
+    fetchWoundPayments(selectedWoundId)
+      .then((p) => active && setPayments(p))
+      .catch(() => {});
+    fetchWoundConversationId(selectedWoundId)
+      .then(async (convId) => {
+        if (!active) return;
+        setConversationId(convId);
+        const msgs = await fetchMessages(convId);
+        if (!active) return;
+        setMessages(msgs);
+        await markConversationRead(convId, nurseId);
       })
       .catch(() => {});
-  }, [wound.woundId, wound.patientId, nurseId]);
+
+    return () => {
+      active = false;
+    };
+  }, [selectedWoundId, nurseId]);
 
   const plan = wound.latestPlan;
   const progress = plan ? planProgress(plan) : null;
@@ -86,6 +133,18 @@ export function ActivePatient({
   const currentHealing = submissions[0]?.healing_percent ?? null;
   const firstSubmission = submissions[submissions.length - 1] ?? null;
   const lastSubmission = submissions[0] ?? null;
+
+  const feed = useMemo<FeedItem[]>(() => {
+    const items: FeedItem[] = [
+      ...submissions.map(
+        (s): FeedItem => ({ kind: "submission", at: s.created_at, sub: s }),
+      ),
+      ...messages.map(
+        (m): FeedItem => ({ kind: "message", at: m.created_at, msg: m }),
+      ),
+    ];
+    return items.sort((a, b) => b.at.localeCompare(a.at));
+  }, [submissions, messages]);
 
   const approvePayment = async (p: PaymentWithMeta) => {
     if (
@@ -103,7 +162,7 @@ export function ActivePatient({
     if (res.ok) {
       setPaymentSuccess("Ödeme onaylandı — plan aktifleştirildi.");
       try {
-        setPayments(await fetchPatientPayments(wound.patientId));
+        setPayments(await fetchWoundPayments(selectedWoundId));
       } catch {
         /* tazeleme başarısızsa mevcut liste kalır */
       }
@@ -135,6 +194,42 @@ export function ActivePatient({
         }`}
         action={<StatusBadge status="active" />}
       />
+
+      {/* Yara seçici — hastanın birden çok yarası varsa */}
+      {wounds.length > 1 && (
+        <div
+          style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}
+        >
+          {wounds.map((w) => {
+            const active = w.woundId === selectedWoundId;
+            const badge = trackingBadge((w.latestPlan?.status as PlanStatus) ?? null);
+            return (
+              <button
+                key={w.woundId}
+                onClick={() => {
+                  setSelectedWoundId(w.woundId);
+                  setTab("feed");
+                }}
+                style={{
+                  border: `1px solid ${active ? "var(--primary)" : "var(--card-border)"}`,
+                  background: active ? "var(--primary)" : "#fff",
+                  color: active ? "#fff" : "var(--text-body)",
+                  borderRadius: 999,
+                  padding: "8px 14px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                }}
+              >
+                {woundTypeLabel[w.type]}
+                <StatusBadge status={badge} />
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       <div
         className="split-2col"
@@ -266,41 +361,74 @@ export function ActivePatient({
           <div style={{ padding: 20 }}>
             {tab === "feed" && (
               <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {submissions.length === 0 && (
-                  <div style={{ color: "var(--text-muted)" }}>Henüz gönderim yok.</div>
+                {feed.length === 0 && (
+                  <div style={{ color: "var(--text-muted)" }}>Henüz hareket yok.</div>
                 )}
-                {submissions.map((s) => (
-                  <div key={s.id} style={{ display: "flex", gap: 12 }}>
-                    <div
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: 999,
-                        background: "var(--primary-mid)",
-                        marginTop: 5,
-                        flexShrink: 0,
-                      }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
-                        {formatRelative(s.created_at)}
-                      </div>
-                      <div style={{ fontWeight: 700, color: "var(--text-heading)", margin: "2px 0" }}>
-                        Görsel + not · Ağrı: {painLevelLabel[s.pain_level]}
-                      </div>
-                      <p style={{ fontSize: 13.5, color: "var(--text-body)", lineHeight: 1.5 }}>
-                        {s.patient_note ?? "—"}
-                      </p>
-                      <div style={{ marginTop: 8, maxWidth: 200 }}>
-                        <LiveWoundPhoto
-                          imagePath={s.image_path}
-                          height={120}
-                          label={s.healing_percent != null ? `%${s.healing_percent}` : undefined}
-                        />
+                {feed.map((item) =>
+                  item.kind === "submission" ? (
+                    <div key={`s-${item.sub.id}`} style={{ display: "flex", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          background: "var(--primary-mid)",
+                          marginTop: 5,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                          {formatRelative(item.sub.created_at)}
+                        </div>
+                        <div style={{ fontWeight: 700, color: "var(--text-heading)", margin: "2px 0" }}>
+                          Görsel + not · Ağrı: {painLevelLabel[item.sub.pain_level]}
+                        </div>
+                        <p style={{ fontSize: 13.5, color: "var(--text-body)", lineHeight: 1.5 }}>
+                          {item.sub.patient_note ?? "—"}
+                        </p>
+                        <div style={{ marginTop: 8, maxWidth: 200 }}>
+                          <LiveWoundPhoto
+                            imagePath={item.sub.image_path}
+                            height={120}
+                            label={
+                              item.sub.healing_percent != null
+                                ? `%${item.sub.healing_percent}`
+                                : undefined
+                            }
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ) : (
+                    <div key={`m-${item.msg.id}`} style={{ display: "flex", gap: 12 }}>
+                      <div
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 999,
+                          background:
+                            item.msg.sender_id === nurseId
+                              ? "var(--primary)"
+                              : "var(--card-border)",
+                          marginTop: 5,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                          {formatRelative(item.msg.created_at)}
+                        </div>
+                        <div style={{ fontWeight: 700, color: "var(--text-heading)", margin: "2px 0" }}>
+                          Mesaj · {item.msg.sender_id === nurseId ? "Siz" : "Hasta"}
+                        </div>
+                        <p style={{ fontSize: 13.5, color: "var(--text-body)", lineHeight: 1.5 }}>
+                          {item.msg.type === "image" ? "Fotoğraf" : item.msg.content}
+                        </p>
+                      </div>
+                    </div>
+                  ),
+                )}
               </div>
             )}
 

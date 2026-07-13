@@ -154,6 +154,21 @@ export async function fetchWoundByPatientId(
   return rows[0] ? toWoundCard(rows[0]) : null;
 }
 
+/** Bir hastanın tüm yaraları (yeni → eski) — yara dosyası seçici için. */
+export async function fetchPatientWounds(
+  patientId: string,
+): Promise<WoundCard[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("wounds")
+    .select(WOUND_SELECT)
+    .eq("patient_id", patientId)
+    .is("deleted_at", null)
+    .order("started_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as unknown as WoundJoin[]).map(toWoundCard);
+}
+
 /** Bir yaranın tüm gönderimleri (yeni → eski). */
 export async function fetchSubmissions(
   woundId: string,
@@ -446,25 +461,54 @@ export async function fetchPatientPayments(
   }));
 }
 
+/** Bir yaranın plan(lar)ının ödemeleri (yara dosyası ödemeler sekmesi). */
+export async function fetchWoundPayments(
+  woundId: string,
+): Promise<PaymentWithMeta[]> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("payments")
+    .select(
+      `*,
+       plan:plans!payments_plan_id_fkey!inner ( type, wound_id ),
+       patient:patients!payments_patient_id_fkey ( profile:profiles!patients_id_fkey ( full_name ) )`,
+    )
+    .eq("plan.wound_id", woundId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as unknown as PaymentJoin[]).map((p) => ({
+    ...p,
+    planType: (p.plan?.type as PlanType) ?? null,
+    patientName: p.patient?.profile?.full_name ?? "Hasta",
+  }));
+}
+
 /* ----------------------------- KONUŞMA / MESAJ ----------------------------- */
 
 export interface ConversationWithMeta extends ConversationRow {
   patientName: string;
-  patientPlanStatus: PlanStatus | null;
+  woundType: WoundRow["type"] | null;
+  woundPlanStatus: PlanStatus | null;
   lastMessage: string | null;
 }
 
 type ConversationJoin = ConversationRow & {
-  patient:
+  wound:
     | {
-        profile: Pick<ProfileRow, "full_name"> | null;
+        type: WoundRow["type"];
         plans: Pick<PlanRow, "status" | "created_at">[] | null;
       }
+    | null;
+  patient:
+    | { profile: Pick<ProfileRow, "full_name"> | null }
     | null;
   messages: Pick<MessageRow, "content" | "created_at">[] | null;
 };
 
-/** Hemşirenin konuşmaları + hasta adı + son mesaj + plan durumu. */
+/**
+ * Hemşirenin konuşmaları — artık YARA başına (conversations.wound_id).
+ * Her satır: hasta adı + yara tipi + o yaranın plan durumu + son mesaj.
+ */
 export async function fetchConversations(
   nurseId: string,
 ): Promise<ConversationWithMeta[]> {
@@ -473,9 +517,12 @@ export async function fetchConversations(
     .from("conversations")
     .select(
       `*,
-       patient:patients!conversations_patient_id_fkey (
-         profile:profiles!patients_id_fkey ( full_name ),
+       wound:wounds!conversations_wound_id_fkey (
+         type,
          plans:plans ( status, created_at )
+       ),
+       patient:patients!conversations_patient_id_fkey (
+         profile:profiles!patients_id_fkey ( full_name )
        ),
        messages:messages ( content, created_at )`,
     )
@@ -486,13 +533,14 @@ export async function fetchConversations(
     const msgs = (c.messages ?? [])
       .slice()
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
-    const plans = (c.patient?.plans ?? [])
+    const plans = (c.wound?.plans ?? [])
       .slice()
       .sort((a, b) => b.created_at.localeCompare(a.created_at));
     return {
       ...c,
       patientName: c.patient?.profile?.full_name ?? "Hasta",
-      patientPlanStatus: (plans[0]?.status as PlanStatus) ?? null,
+      woundType: c.wound?.type ?? null,
+      woundPlanStatus: (plans[0]?.status as PlanStatus) ?? null,
       lastMessage: msgs[0]?.content ?? null,
     };
   });
@@ -537,20 +585,40 @@ export async function sendMessage(
   return data;
 }
 
-/** Patient_id'den o hastayla olan konuşmayı bul (aktif hasta mesaj sekmesi). */
-export async function fetchConversationByPatient(
-  nurseId: string,
-  patientId: string,
-): Promise<ConversationRow | null> {
+/**
+ * Bir yaranın sohbetini bul/oluştur (RPC) → conversation uuid.
+ * Yalnızca yaraya ATANMIŞ hemşire çağırabilir; atanmamış yarada RPC hata verir.
+ */
+export async function fetchWoundConversationId(
+  woundId: string,
+): Promise<string> {
   const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("conversations")
-    .select("*")
-    .eq("nurse_id", nurseId)
-    .eq("patient_id", patientId)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_or_create_wound_conversation", {
+    w_id: woundId,
+  });
   if (error) throw error;
-  return data;
+  return data as string;
+}
+
+/**
+ * Karşı taraftan gelen okunmamış mesajları okundu işaretle (read_at = now).
+ * sender_id != nurseId ve read_at IS NULL olanlar güncellenir. Sessiz geçer.
+ */
+export async function markConversationRead(
+  conversationId: string,
+  nurseId: string,
+): Promise<void> {
+  try {
+    const supabase = getSupabase();
+    await supabase
+      .from("messages")
+      .update({ read_at: new Date().toISOString() })
+      .eq("conversation_id", conversationId)
+      .neq("sender_id", nurseId)
+      .is("read_at", null);
+  } catch {
+    /* sessiz — okundu işareti UX'i bloklamasın */
+  }
 }
 
 /* ----------------------------- ŞABLONLAR ----------------------------- */

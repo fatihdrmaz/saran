@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -10,18 +10,25 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { useFocusEffect, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, spacing } from "@saran/tokens";
 import { Avatar, Body, WoundPhoto } from "../../components";
 import { sansFont } from "../../lib/theme";
 import { useAuth } from "../../lib/auth";
-import { getConversationThread, sendMessage } from "../../lib/queries";
+import {
+  getPatientWoundThreads,
+  getWoundThread,
+  markConversationRead,
+  sendMessage,
+  woundTypeLabel,
+  type WoundThreadSummary,
+} from "../../lib/queries";
 import type { Database } from "@saran/supabase";
 
 type MessageRow = Database["public"]["Tables"]["messages"]["Row"];
 
-const quickReplies = ["Teşekkürler 🙏", "Tamam, yenileyeceğim", "Ağrım arttı", "Fotoğraf gönderiyorum"];
+const quickReplies = ["Teşekkürler", "Tamam, yenileyeceğim", "Ağrım arttı", "Fotoğraf gönderiyorum"];
 
 function formatTime(iso: string): string {
   try {
@@ -31,37 +38,90 @@ function formatTime(iso: string): string {
   }
 }
 
-/** README §6A-13: Mesajlaşma — hemşire ile sohbet (CANLI oku/insert). */
+/**
+ * README §6A-13: Mesajlaşma — artık YARA BAZLI. Seçili yara yoksa mesajlaşılabilir
+ * yaraların listesi; bir yara seçilince o yaranın sohbeti (CANLI oku/insert).
+ */
 export default function Messages() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const { woundId: paramWoundId } = useLocalSearchParams<{ woundId?: string }>();
+
+  const [selectedWoundId, setSelectedWoundId] = useState<string | null>(paramWoundId ?? null);
+  const [threads, setThreads] = useState<WoundThreadSummary[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+
   const [draft, setDraft] = useState("");
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageRow[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatUnavailable, setChatUnavailable] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // Bildirim/derin bağlantı ile gelen woundId → o yaranın sohbetini aç.
+  useEffect(() => {
+    if (paramWoundId) setSelectedWoundId(paramWoundId);
+  }, [paramWoundId]);
+
+  // Yara listesi (mesajlaşılabilir yaralar + son mesaj + okunmamış).
   useFocusEffect(
     useCallback(() => {
       if (!user) return;
       let active = true;
-      setLoading(true);
-      getConversationThread(user.id)
-        .then((thread) => {
-          if (!active) return;
-          setConversationId(thread?.conversation.id ?? null);
-          setMessages(thread?.messages ?? []);
+      setListLoading(true);
+      getPatientWoundThreads(user.id)
+        .then((data) => {
+          if (active) setThreads(data);
         })
-        .catch((e) => console.warn("[saran] mesajlar yüklenemedi:", e?.message))
+        .catch((e) => console.warn("[saran] yara sohbetleri yüklenemedi:", e?.message))
         .finally(() => {
-          if (active) setLoading(false);
+          if (active) setListLoading(false);
         });
       return () => {
         active = false;
       };
     }, [user]),
   );
+
+  // Seçili yaranın sohbeti (mesajlar + okundu işaretle).
+  useFocusEffect(
+    useCallback(() => {
+      if (!user || !selectedWoundId) {
+        setConversationId(null);
+        setMessages([]);
+        setChatUnavailable(false);
+        return;
+      }
+      let active = true;
+      setChatLoading(true);
+      setChatUnavailable(false);
+      getWoundThread(selectedWoundId)
+        .then(async (thread) => {
+          if (!active) return;
+          setConversationId(thread.conversationId);
+          setMessages(thread.messages);
+          try {
+            await markConversationRead(thread.conversationId, user.id);
+          } catch (e) {
+            console.warn("[saran] okundu işaretlenemedi:", (e as Error)?.message);
+          }
+        })
+        .catch((e) => {
+          // Yara henüz bir hemşireye atanmamışsa RPC hata verir → nazik not.
+          console.warn("[saran] yara sohbeti açılamadı:", (e as Error)?.message);
+          if (active) setChatUnavailable(true);
+        })
+        .finally(() => {
+          if (active) setChatLoading(false);
+        });
+      return () => {
+        active = false;
+      };
+    }, [user, selectedWoundId]),
+  );
+
+  const selectedSummary = threads.find((t) => t.wound.id === selectedWoundId) ?? null;
 
   const onSend = async () => {
     const text = draft.trim();
@@ -79,6 +139,75 @@ export default function Messages() {
     }
   };
 
+  // ── Liste görünümü (seçili yara yok) ──────────────────────────────────────
+  if (!selectedWoundId) {
+    return (
+      <View style={styles.flex}>
+        <View style={[styles.listHeader, { paddingTop: insets.top + spacing.md }]}>
+          <Text style={styles.listTitle}>Mesajlar</Text>
+          <Text style={styles.listSub}>Her yaranız için ayrı sohbet</Text>
+        </View>
+        {listLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.primary} />
+          </View>
+        ) : threads.length === 0 ? (
+          <View style={styles.center}>
+            <Body color={colors.textMuted} center style={styles.emptyText}>
+              Henüz mesajlaşılacak yaranız yok. Planınız onaylanıp hemşireniz atandığında
+              yaralarınız burada listelenir.
+            </Body>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.listBody} showsVerticalScrollIndicator={false}>
+            {threads.map((t) => (
+              <Pressable
+                key={t.wound.id}
+                style={({ pressed }) => [styles.threadRow, pressed && styles.threadPressed]}
+                onPress={() => setSelectedWoundId(t.wound.id)}
+              >
+                <Avatar name={woundTypeLabel(t.wound.type)} size={44} />
+                <View style={styles.threadBody}>
+                  <Text style={styles.threadTitle} numberOfLines={1}>
+                    {woundTypeLabel(t.wound.type)}
+                  </Text>
+                  <Text style={styles.threadPreview} numberOfLines={1}>
+                    {t.lastMessage
+                      ? t.lastMessage.type === "image"
+                        ? "Fotoğraf"
+                        : t.lastMessage.content
+                      : "Sohbeti başlatmak için dokunun"}
+                  </Text>
+                </View>
+                <View style={styles.threadRight}>
+                  {t.lastMessage ? (
+                    <Text style={styles.threadTime}>{formatTime(t.lastMessage.created_at)}</Text>
+                  ) : null}
+                  {t.unreadCount > 0 ? (
+                    <View style={styles.unreadBadge}>
+                      <Text style={styles.unreadText}>{t.unreadCount}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+    );
+  }
+
+  // ── Sohbet görünümü (seçili yara) ─────────────────────────────────────────
+  const headerTitle = selectedSummary
+    ? woundTypeLabel(selectedSummary.wound.type)
+    : "Yara sohbeti";
+
+  const backToList = () => {
+    setSelectedWoundId(null);
+    setConversationId(null);
+    setMessages([]);
+  };
+
   const canSend = !!conversationId && draft.trim().length > 0 && !sending;
 
   return (
@@ -88,46 +217,64 @@ export default function Messages() {
       keyboardVerticalOffset={0}
     >
       <View style={[styles.header, { paddingTop: insets.top + spacing.sm }]}>
+        <Pressable onPress={backToList} style={styles.backBtn}>
+          <Text style={styles.backIcon}>‹</Text>
+        </Pressable>
         <Avatar name="Hemşireniz" size={40} online />
         <View style={styles.headInfo}>
-          <Text style={styles.headName}>Hemşireniz</Text>
-          <Text style={styles.headStatus}>Yara bakım hemşiresi</Text>
+          <Text style={styles.headName} numberOfLines={1}>{headerTitle}</Text>
+          <Text style={styles.headStatus}>Yara bakım hemşireniz</Text>
         </View>
-        <Pressable onPress={() => router.push("/appointment")} style={styles.callBtn}>
-          <Text style={styles.callIcon}>📅</Text>
+        <Pressable
+          onPress={() =>
+            router.push({ pathname: "/wound-detail", params: { woundId: selectedWoundId } })
+          }
+          style={styles.callBtn}
+        >
+          <Text style={styles.callIcon}>🩹</Text>
         </Pressable>
       </View>
 
-      {loading ? (
+      {chatLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={colors.primary} />
         </View>
-      ) : !conversationId ? (
+      ) : chatUnavailable ? (
         <View style={styles.center}>
-          <Text style={styles.emptyIcon}>💬</Text>
           <Body color={colors.textMuted} center style={styles.emptyText}>
-            Henüz bir konuşmanız yok. Planınız onaylanıp hemşireniz atandığında mesajlaşma burada açılır.
+            Bu yara için mesajlaşma henüz açılmadı. Yaranız bir hemşireye atandığında sohbet
+            burada başlar.
           </Body>
         </View>
       ) : (
-        <ScrollView style={styles.flex} contentContainerStyle={styles.thread} showsVerticalScrollIndicator={false}>
-          {messages.map((m) => {
-            const mine = m.sender_id === user?.id;
-            return (
-              <View key={m.id} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
-                {m.type === "image" ? (
-                  <View style={styles.imageBubble}>
-                    <WoundPhoto height={140} compact showReveal label="Fotoğraf" style={styles.bubbleImage} />
-                  </View>
-                ) : (
-                  <View style={[styles.bubble, mine ? styles.bubbleMe : styles.bubbleNurse]}>
-                    <Text style={[styles.bubbleText, mine && styles.bubbleTextMe]}>{m.content}</Text>
-                    <Text style={[styles.time, mine && styles.timeMe]}>{formatTime(m.created_at)}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.thread}
+          showsVerticalScrollIndicator={false}
+        >
+          {messages.length === 0 ? (
+            <Body color={colors.textMuted} center style={styles.emptyText}>
+              Henüz mesaj yok. Hemşirenize ilk mesajınızı yazın.
+            </Body>
+          ) : (
+            messages.map((m) => {
+              const mine = m.sender_id === user?.id;
+              return (
+                <View key={m.id} style={[styles.bubbleRow, mine ? styles.right : styles.left]}>
+                  {m.type === "image" ? (
+                    <View style={styles.imageBubble}>
+                      <WoundPhoto height={140} compact showReveal label="Fotoğraf" style={styles.bubbleImage} />
+                    </View>
+                  ) : (
+                    <View style={[styles.bubble, mine ? styles.bubbleMe : styles.bubbleNurse]}>
+                      <Text style={[styles.bubbleText, mine && styles.bubbleTextMe]}>{m.content}</Text>
+                      <Text style={[styles.time, mine && styles.timeMe]}>{formatTime(m.created_at)}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          )}
         </ScrollView>
       )}
 
@@ -142,7 +289,12 @@ export default function Messages() {
       ) : null}
 
       <View style={[styles.inputBar, { paddingBottom: insets.bottom + spacing.sm }]}>
-        <Pressable style={styles.attach}>
+        <Pressable
+          style={styles.attach}
+          onPress={() =>
+            router.push({ pathname: "/photo-submit", params: { woundId: selectedWoundId } })
+          }
+        >
           <Text style={styles.attachIcon}>📷</Text>
         </Pressable>
         <TextInput
@@ -164,18 +316,57 @@ export default function Messages() {
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.bgCream },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: spacing.xl, gap: spacing.md },
-  emptyIcon: { fontSize: 40 },
   emptyText: { paddingHorizontal: spacing.lg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+  // Liste
+  listHeader: {
     paddingHorizontal: spacing.lg,
     paddingBottom: spacing.md,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.cardBorder,
   },
+  listTitle: { fontFamily: sansFont, color: colors.textHeading, fontWeight: "800", fontSize: 20 },
+  listSub: { fontFamily: sansFont, color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  listBody: { padding: spacing.lg, gap: spacing.md },
+  threadRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderColor: colors.cardBorder,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    padding: spacing.md,
+  },
+  threadPressed: { opacity: 0.85 },
+  threadBody: { flex: 1, gap: 2 },
+  threadTitle: { fontFamily: sansFont, color: colors.textHeading, fontWeight: "700", fontSize: 15 },
+  threadPreview: { fontFamily: sansFont, color: colors.textMuted, fontSize: 13 },
+  threadRight: { alignItems: "flex-end", gap: spacing.xs },
+  threadTime: { fontFamily: sansFont, color: colors.textMutedAlt, fontSize: 11 },
+  unreadBadge: {
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    backgroundColor: colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  unreadText: { fontFamily: sansFont, color: "#fff", fontSize: 11, fontWeight: "800" },
+  // Sohbet başlığı
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.cardBorder,
+  },
+  backBtn: { width: 32, height: 40, alignItems: "center", justifyContent: "center" },
+  backIcon: { fontSize: 30, color: colors.textHeading, lineHeight: 30 },
   headInfo: { flex: 1 },
   headName: { fontFamily: sansFont, color: colors.textHeading, fontWeight: "800", fontSize: 15 },
   headStatus: { fontFamily: sansFont, color: colors.primaryMid, fontSize: 12, fontWeight: "600" },

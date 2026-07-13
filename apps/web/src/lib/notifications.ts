@@ -51,20 +51,25 @@ export function addSeenMessageIds(ids: string[]): void {
 
 /* ---------- Kaynak sorguları ---------- */
 
-type UnreadMessage = { id: string; created_at: string };
+/** İlgili mesajın ait olduğu yaranın id'si (varsa) href için taşınır. */
+type UnreadMessage = { id: string; created_at: string; woundId: string | null };
 
 /** Hemşireden gelen, okunmamış ve lokal olarak da "görülmemiş" mesajlar. */
 async function fetchUnreadNurseMessages(userId: string): Promise<UnreadMessage[]> {
   const supabase = getSupabase();
   const { data: convs, error: convErr } = await supabase
     .from("conversations")
-    .select("id")
+    .select("id,wound_id")
     .eq("patient_id", userId);
   if (convErr || !convs || convs.length === 0) return [];
 
+  // Konuşma → yara eşlemesi (mesaj href'i yaraya yönlensin diye).
+  const woundByConv = new Map<string, string | null>();
+  for (const c of convs) woundByConv.set(c.id, c.wound_id);
+
   const { data: msgs, error: msgErr } = await supabase
     .from("messages")
-    .select("id,created_at")
+    .select("id,created_at,conversation_id")
     .in(
       "conversation_id",
       convs.map((c) => c.id),
@@ -75,11 +80,18 @@ async function fetchUnreadNurseMessages(userId: string): Promise<UnreadMessage[]
   if (msgErr || !msgs) return [];
 
   const seen = getSeenMessageIds();
-  return msgs.filter((m) => !seen.has(m.id));
+  return msgs
+    .filter((m) => !seen.has(m.id))
+    .map((m) => ({
+      id: m.id,
+      created_at: m.created_at,
+      woundId: woundByConv.get(m.conversation_id) ?? null,
+    }));
 }
 
 type ProposedPlanRow = {
   id: string;
+  wound_id: string;
   created_at: string;
   product: { title: string } | null;
 };
@@ -87,25 +99,30 @@ type ProposedPlanRow = {
 async function fetchProposedPlans(): Promise<ProposedPlanRow[]> {
   const { data, error } = await getSupabase()
     .from("plans")
-    .select("id,created_at,product:plan_products(title)")
+    .select("id,wound_id,created_at,product:plan_products(title)")
     .eq("status", "proposed")
     .order("created_at", { ascending: false });
   if (error || !data) return [];
   return data as unknown as ProposedPlanRow[];
 }
 
-type PaidPaymentRow = { id: string; receipt_no: string | null; paid_at: string };
+type PaidPaymentRow = {
+  id: string;
+  receipt_no: string | null;
+  paid_at: string;
+  plan: { wound_id: string } | null;
+};
 
 async function fetchRecentPaidPayments(): Promise<PaidPaymentRow[]> {
   const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
   const { data, error } = await getSupabase()
     .from("payments")
-    .select("id,receipt_no,paid_at")
+    .select("id,receipt_no,paid_at,plan:plans(wound_id)")
     .eq("status", "paid")
     .gte("paid_at", since)
     .order("paid_at", { ascending: false });
   if (error || !data) return [];
-  return data.filter((p): p is PaidPaymentRow => p.paid_at != null);
+  return (data as unknown as PaidPaymentRow[]).filter((p) => p.paid_at != null);
 }
 
 /* ---------- Dışa açık API ---------- */
@@ -127,17 +144,19 @@ export async function getPatientNotifications(userId: string): Promise<PatientNo
       title: "Bakım planı öneriniz hazır",
       detail: plan.product?.title ?? "Onayınızı bekliyor",
       date: plan.created_at,
-      href: "/hesabim",
+      href: `/hesabim/yara/${plan.wound_id}`,
     });
   }
 
   if (unreadMsgs.length > 0) {
+    // En yeni okunmamış mesajın ait olduğu yaranın dosyasına yönlendir.
+    const woundId = unreadMsgs.find((m) => m.woundId)?.woundId ?? null;
     items.push({
       id: "unread-messages",
       kind: "message",
       title: `Hemşirenizden ${unreadMsgs.length} yeni mesaj`,
       date: unreadMsgs[0].created_at,
-      href: "/hesabim#mesajlar",
+      href: woundId ? `/hesabim/yara/${woundId}#mesajlar` : "/hesabim",
     });
   }
 
@@ -147,7 +166,7 @@ export async function getPatientNotifications(userId: string): Promise<PatientNo
       kind: "payment",
       title: pay.receipt_no ? `Ödemeniz alındı — makbuz ${pay.receipt_no}` : "Ödemeniz alındı",
       date: pay.paid_at,
-      href: "/hesabim",
+      href: pay.plan?.wound_id ? `/hesabim/yara/${pay.plan.wound_id}` : "/hesabim",
     });
   }
 

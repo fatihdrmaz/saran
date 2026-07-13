@@ -281,6 +281,7 @@ export type Database = {
           last_message_at: string | null
           nurse_id: string
           patient_id: string
+          wound_id: string | null
         }
         Insert: {
           created_at?: string
@@ -288,6 +289,7 @@ export type Database = {
           last_message_at?: string | null
           nurse_id: string
           patient_id: string
+          wound_id?: string | null
         }
         Update: {
           created_at?: string
@@ -295,6 +297,7 @@ export type Database = {
           last_message_at?: string | null
           nurse_id?: string
           patient_id?: string
+          wound_id?: string | null
         }
         Relationships: [
           {
@@ -309,6 +312,13 @@ export type Database = {
             columns: ["patient_id"]
             isOneToOne: false
             referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversations_wound_id_fkey"
+            columns: ["wound_id"]
+            isOneToOne: false
+            referencedRelation: "wounds"
             referencedColumns: ["id"]
           },
         ]
@@ -835,6 +845,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      get_or_create_wound_conversation: {
+        Args: { w_id: string }
+        Returns: string
       }
       is_admin: { Args: never; Returns: boolean }
       is_verified_nurse: { Args: never; Returns: boolean }

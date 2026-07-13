@@ -2,10 +2,9 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { PlanStatus } from "@saran/shared";
 import { PageHeader } from "../../../components/ui";
 import { useAuth } from "../../../lib/auth";
-import { fetchWoundByPatientId, type WoundCard } from "../../../lib/queries";
+import { fetchPatientWounds, type WoundCard } from "../../../lib/queries";
 import { ActivePatient } from "./ActivePatient";
 
 export default function PatientDetailPage({
@@ -16,21 +15,26 @@ export default function PatientDetailPage({
   const { id } = use(params);
   const { user } = useAuth();
   const router = useRouter();
-  const [wound, setWound] = useState<WoundCard | null | undefined>(undefined);
+  const [wounds, setWounds] = useState<WoundCard[] | undefined>(undefined);
+  const [initialWoundId, setInitialWoundId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
     let active = true;
-    fetchWoundByPatientId(id)
-      .then((w) => {
+    // ?wound=<id> ile (Gelen kutusu "Hastaya git") ilgili yara seçili gelir.
+    if (typeof window !== "undefined") {
+      setInitialWoundId(new URLSearchParams(window.location.search).get("wound"));
+    }
+    fetchPatientWounds(id)
+      .then((ws) => {
         if (!active) return;
-        // Plan kapısı: aktif değilse değerlendirmeye yönlendir.
-        if (!w || (w.latestPlan?.status as PlanStatus) !== PlanStatus.ACTIVE) {
+        // Hastanın hiç yarası yoksa değerlendirmeye yönlendir.
+        if (ws.length === 0) {
           router.replace(`/hastalar/${id}/degerlendirme`);
           return;
         }
-        setWound(w);
+        setWounds(ws);
       })
       .catch((e) => active && setError(e.message ?? "Veri yüklenemedi"));
     return () => {
@@ -45,7 +49,7 @@ export default function PatientDetailPage({
         <div style={{ color: "var(--danger)", fontWeight: 600 }}>{error}</div>
       </>
     );
-  if (!wound)
+  if (!wounds)
     return (
       <>
         <PageHeader title="Hasta" />
@@ -53,5 +57,11 @@ export default function PatientDetailPage({
       </>
     );
 
-  return <ActivePatient wound={wound} nurseId={user!.id} />;
+  return (
+    <ActivePatient
+      wounds={wounds}
+      nurseId={user!.id}
+      initialWoundId={initialWoundId}
+    />
+  );
 }

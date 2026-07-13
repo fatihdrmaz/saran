@@ -7,7 +7,7 @@ import type { Database } from "@saran/supabase";
 import { Button, Card, StatusBadge } from "../../components/ui";
 import { isWoundImagePath, LiveWoundPhoto } from "../../components/LiveWoundPhoto";
 import { useAuth } from "../../lib/auth";
-import { formatRelative } from "../../lib/labels";
+import { formatRelative, woundTypeLabel } from "../../lib/labels";
 import {
   fetchConversations,
   fetchMessages,
@@ -121,10 +121,19 @@ export function Inbox() {
               </span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontWeight: 700, color: "var(--text-heading)" }}>
+                  <span
+                    style={{
+                      fontWeight: 700,
+                      color: "var(--text-heading)",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {c.patientName}
+                    {c.woundType ? ` · ${woundTypeLabel[c.woundType]}` : ""}
                   </span>
-                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", flexShrink: 0 }}>
                     {formatRelative(c.last_message_at)}
                   </span>
                 </div>
@@ -177,11 +186,18 @@ export function Inbox() {
               <div style={{ flex: 1 }}>
                 <div style={{ fontWeight: 700, color: "var(--text-heading)" }}>
                   {active.patientName}
+                  {active.woundType ? ` · ${woundTypeLabel[active.woundType]}` : ""}
                 </div>
-                <StatusBadge status={trackingBadge(active.patientPlanStatus)} />
+                <StatusBadge status={trackingBadge(active.woundPlanStatus)} />
               </div>
-              <Link href={`/hastalar/${active.patient_id}`}>
-                <Button variant="secondary">Hastaya git →</Button>
+              <Link
+                href={
+                  active.wound_id
+                    ? `/hastalar/${active.patient_id}?wound=${active.wound_id}`
+                    : `/hastalar/${active.patient_id}`
+                }
+              >
+                <Button variant="secondary">Yara dosyasına git →</Button>
               </Link>
             </div>
 

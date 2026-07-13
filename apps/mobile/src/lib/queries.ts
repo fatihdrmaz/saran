@@ -388,6 +388,136 @@ export async function sendMessage(
   return data;
 }
 
+// ── Yaraya bağlı mesajlaşma (her yara → tek sohbet) ────────────────────────
+
+/**
+ * Bir yaranın sohbetini bulur/oluşturur ve conversation id döner
+ * (`get_or_create_wound_conversation` RPC). Yara bir hemşireye ATANMAMIŞSA
+ * RPC hata fırlatır; çağıran bunu yakalayıp nazik bir not göstermelidir.
+ */
+export async function getWoundConversationId(woundId: string): Promise<string> {
+  const { data, error } = await supabase.rpc("get_or_create_wound_conversation", {
+    w_id: woundId,
+  });
+  if (error) throw error;
+  if (!data) throw new Error("Bu yara için sohbet oluşturulamadı.");
+  return data;
+}
+
+export interface WoundThread {
+  conversationId: string;
+  messages: MessageRow[];
+}
+
+/**
+ * Bir yaranın sohbetindeki mesajları (eski → yeni) conversation id ile döner.
+ * Yara atanmamışsa hata fırlatır (RPC üzerinden).
+ */
+export async function getWoundThread(woundId: string): Promise<WoundThread> {
+  const conversationId = await getWoundConversationId(woundId);
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return { conversationId, messages: data ?? [] };
+}
+
+/**
+ * Yaraya bağlı sohbete hasta adına metin mesajı ekler. Conversation id RPC ile
+ * bulunur/oluşturulur; ardından mesaj eklenir. Eklenen satırı döner.
+ */
+export async function sendWoundMessage(
+  woundId: string,
+  senderId: string,
+  content: string,
+): Promise<MessageRow> {
+  const conversationId = await getWoundConversationId(woundId);
+  return sendMessage(conversationId, senderId, content);
+}
+
+/**
+ * Bir sohbette hastanın GÖNDERMEDİĞİ okunmamış mesajları okundu (`read_at`)
+ * olarak işaretler. Okunacak bir şey yoksa sessizce döner.
+ */
+export async function markConversationRead(
+  conversationId: string,
+  patientId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("messages")
+    .update({ read_at: new Date().toISOString() })
+    .eq("conversation_id", conversationId)
+    .neq("sender_id", patientId)
+    .is("read_at", null);
+  if (error) throw error;
+}
+
+/** Mesaj sekmesi listesi: bir yara + sohbeti + son mesaj önizleme + okunmamış sayısı. */
+export interface WoundThreadSummary {
+  wound: WoundRow;
+  conversationId: string | null;
+  lastMessage: MessageRow | null;
+  unreadCount: number;
+}
+
+/**
+ * Hastanın MESAJLAŞILABİLİR yaralarını (bir hemşireye atanmış) her biri için son
+ * mesaj önizlemesi ve okunmamış sayısıyla (yeni → eski) döner. Sohbet henüz
+ * oluşmamış yaralar da listelenir (lastMessage null). Veri yoksa boş dizi.
+ */
+export async function getPatientWoundThreads(
+  patientId: string,
+): Promise<WoundThreadSummary[]> {
+  const { data: wounds, error } = await supabase
+    .from("wounds")
+    .select("*")
+    .eq("patient_id", patientId)
+    .is("deleted_at", null)
+    .not("assigned_nurse_id", "is", null)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  if (!wounds || wounds.length === 0) return [];
+
+  const woundIds = wounds.map((w) => w.id);
+
+  const { data: conversations, error: convError } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("patient_id", patientId)
+    .in("wound_id", woundIds);
+  if (convError) throw convError;
+
+  const convByWound = new Map<string, ConversationRow>();
+  for (const c of conversations ?? []) {
+    if (c.wound_id) convByWound.set(c.wound_id, c);
+  }
+
+  const convIds = (conversations ?? []).map((c) => c.id);
+  let messages: MessageRow[] = [];
+  if (convIds.length > 0) {
+    const { data: msgs, error: msgError } = await supabase
+      .from("messages")
+      .select("*")
+      .in("conversation_id", convIds)
+      .order("created_at", { ascending: false });
+    if (msgError) throw msgError;
+    messages = msgs ?? [];
+  }
+
+  return wounds.map((wound) => {
+    const conv = convByWound.get(wound.id) ?? null;
+    const convMsgs = conv ? messages.filter((m) => m.conversation_id === conv.id) : [];
+    const lastMessage = convMsgs[0] ?? null;
+    const unreadCount = convMsgs.filter(
+      (m) => m.sender_id !== patientId && m.read_at === null,
+    ).length;
+    return { wound, conversationId: conv?.id ?? null, lastMessage, unreadCount };
+  });
+}
+
 // ── Kayıt / giriş ──────────────────────────────────────────────────────────
 
 export interface RegisterInput {
@@ -614,11 +744,8 @@ export async function getNotifications(
       .order("paid_at", { ascending: false, nullsFirst: false }),
     supabase
       .from("conversations")
-      .select("id")
-      .eq("patient_id", patientId)
-      .order("last_message_at", { ascending: false, nullsFirst: false })
-      .limit(1)
-      .maybeSingle(),
+      .select("id, wound_id")
+      .eq("patient_id", patientId),
   ]);
 
   if (plansRes.error) throw plansRes.error;
@@ -628,6 +755,8 @@ export async function getNotifications(
   const items: DerivedNotification[] = [];
 
   for (const plan of plansRes.data ?? []) {
+    // Plan artık yaraya bağlı → bildirim ilgili yara dosyasına yönlenir.
+    const woundParam = `?woundId=${plan.wound_id}`;
     if (plan.status === "proposed") {
       items.push({
         id: `plan-${plan.id}`,
@@ -635,7 +764,7 @@ export async function getNotifications(
         title: "Plan öneriniz hazır",
         body: "Hemşireniz bir bakım planı önerdi. Görüntüleyip onaylayabilirsiniz.",
         createdAt: plan.created_at,
-        route: "/plan-proposal",
+        route: `/wound-detail${woundParam}`,
         unread: true,
       });
     } else if (plan.status === "active") {
@@ -645,7 +774,7 @@ export async function getNotifications(
         title: "Planınız aktif",
         body: "Ödemeniz onaylandı; takibiniz başladı.",
         createdAt: plan.started_at ?? plan.created_at,
-        route: "/plan-active",
+        route: `/wound-detail${woundParam}`,
         unread: false,
       });
     }
@@ -664,25 +793,36 @@ export async function getNotifications(
   }
 
   // Okunmamış (read_at null) ve hastanın GÖNDERMEDİĞİ mesajlar → "Yeni mesaj".
-  const conversationId = convRes.data?.id ?? null;
-  if (conversationId) {
+  // Sohbetler artık yaraya bağlı; bildirim ilgili yaranın sohbetine yönlenir.
+  const conversations = convRes.data ?? [];
+  if (conversations.length > 0) {
+    const woundByConv = new Map<string, string | null>();
+    for (const c of conversations) woundByConv.set(c.id, c.wound_id);
+
     const { data: unread, error: unreadError } = await supabase
       .from("messages")
       .select("*")
-      .eq("conversation_id", conversationId)
+      .in(
+        "conversation_id",
+        conversations.map((c) => c.id),
+      )
       .neq("sender_id", patientId)
       .is("read_at", null)
       .order("created_at", { ascending: false });
     if (unreadError) throw unreadError;
 
     for (const msg of unread ?? []) {
+      const woundId = woundByConv.get(msg.conversation_id) ?? null;
+      const route = woundId
+        ? `/(tabs)/messages?woundId=${woundId}`
+        : "/(tabs)/messages";
       items.push({
         id: `message-${msg.id}`,
         kind: "message",
         title: "Yeni mesaj",
         body: msg.content.length > 80 ? `${msg.content.slice(0, 80)}…` : msg.content,
         createdAt: msg.created_at,
-        route: "/(tabs)/messages",
+        route,
         unread: true,
       });
     }
