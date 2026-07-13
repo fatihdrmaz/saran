@@ -78,7 +78,8 @@ export type PlanStatus = (typeof PlanStatus)[keyof typeof PlanStatus];
 export const PaymentStatus = {
   PAID: "paid", // ödendi
   PENDING: "pending", // bekliyor (tahsilat sürüyor)
-  AWAITING_APPROVAL: "awaiting_approval", // hasta onayı/ödeme bekliyor
+  AWAITING_APPROVAL: "awaiting_approval", // hasta havale bildirdi, hemşire onayı bekliyor
+  REJECTED: "rejected", // hemşire reddetti (ödeme hesaba geçmedi)
 } as const;
 export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus];
 

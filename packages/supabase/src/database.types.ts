@@ -881,7 +881,7 @@ export type Database = {
       nurse_document_type: "diploma" | "certificate" | "id"
       nurse_status: "pending" | "verified" | "rejected"
       pain_level: "none" | "mild" | "moderate" | "severe"
-      payment_status: "paid" | "pending" | "awaiting_approval"
+      payment_status: "paid" | "pending" | "awaiting_approval" | "rejected"
       plan_status: "proposed" | "active" | "expired" | "cancelled"
       plan_type: "one_time" | "week_1" | "week_3" | "monthly" | "week_2"
       user_role: "patient" | "nurse" | "admin"
@@ -1483,7 +1483,7 @@ export const Constants = {
       nurse_document_type: ["diploma", "certificate", "id"],
       nurse_status: ["pending", "verified", "rejected"],
       pain_level: ["none", "mild", "moderate", "severe"],
-      payment_status: ["paid", "pending", "awaiting_approval"],
+      payment_status: ["paid", "pending", "awaiting_approval", "rejected"],
       plan_status: ["proposed", "active", "expired", "cancelled"],
       plan_type: ["one_time", "week_1", "week_3", "monthly", "week_2"],
       user_role: ["patient", "nurse", "admin"],
