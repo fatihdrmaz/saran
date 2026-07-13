@@ -139,10 +139,19 @@ export function CaseForm({
     consent &&
     !busy &&
     displayName.trim().length >= 2 &&
-    durationLabel.trim().length >= 2 &&
+    durationLabel.trim().length >= 1 &&
     text.trim().length >= 3 &&
     Boolean(beforeFile) &&
     Boolean(afterFile);
+
+  /** Butonun neden pasif olduğunu kullanıcıya söyle (sessiz pasiflik kafa karıştırıyor). */
+  const missing: string[] = [];
+  if (displayName.trim().length < 2) missing.push("görünen ad");
+  if (durationLabel.trim().length < 1) missing.push("süre etiketi");
+  if (text.trim().length < 3) missing.push("alıntı");
+  if (!beforeFile) missing.push("önce fotoğrafı");
+  if (!afterFile) missing.push("sonra fotoğrafı");
+  if (!consent) missing.push("rıza onayı");
 
   const save = async () => {
     if (!consent) {
@@ -293,13 +302,18 @@ export function CaseForm({
         </div>
       )}
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <Button onClick={save} disabled={!canSave}>
           {busy ? "Kaydediliyor…" : "Vakayı kaydet"}
         </Button>
         <Button variant="ghost" onClick={onCancel} disabled={busy}>
           Vazgeç
         </Button>
+        {!canSave && !busy && missing.length > 0 && (
+          <span style={{ fontSize: 12.5, color: "var(--warning-text)", fontWeight: 600 }}>
+            Eksik: {missing.join(", ")}
+          </span>
+        )}
       </div>
     </Card>
   );
