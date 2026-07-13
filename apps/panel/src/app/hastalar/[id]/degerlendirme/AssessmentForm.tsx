@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { assessmentSchema } from "@saran/shared";
+import { assessmentSchema, PlanStatus, type PlanType } from "@saran/shared";
 import {
   Button,
   Card,
@@ -12,11 +12,14 @@ import {
 } from "../../../../components/ui";
 import { LiveWoundPhoto } from "../../../../components/LiveWoundPhoto";
 import {
+  formatDate,
   formatKurus,
   painLevelLabel,
+  planTypeLabel,
   woundTypeLabel,
 } from "../../../../lib/labels";
 import {
+  cancelPlan,
   claimWound,
   createAssessmentAndPlan,
   fetchProducts,
@@ -58,10 +61,21 @@ export function AssessmentForm({
   const [error, setError] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [planCancelled, setPlanCancelled] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelInfo, setCancelInfo] = useState<string | null>(null);
 
   const isMine = wound.assignedNurseId === nurseId;
   const isPool = wound.assignedNurseId === null;
   const submission = wound.lastSubmission;
+
+  // Onay bekleyen (proposed) plan — varken İKİNCİ plan önerilemez (çift kayıt olmasın).
+  const pendingPlan =
+    !planCancelled &&
+    (wound.latestPlan?.status as PlanStatus | undefined) === PlanStatus.PROPOSED
+      ? wound.latestPlan
+      : null;
 
   // Aktif ürünler (plan_products) — plan seçenekleri DB'den gelir.
   useEffect(() => {
@@ -99,7 +113,37 @@ export function AssessmentForm({
     }
   };
 
+  const cancelProposal = async () => {
+    if (!pendingPlan) return;
+    if (
+      !window.confirm(
+        "Bekleyen plan önerisini iptal etmek istediğinize emin misiniz? Hasta bu planı artık onaylayamaz.",
+      )
+    ) {
+      return;
+    }
+    setCancelError(null);
+    setCancelling(true);
+    try {
+      await cancelPlan(pendingPlan.id);
+      setPlanCancelled(true);
+      setCancelInfo(
+        "Plan önerisi iptal edildi. Artık hastaya yeni bir plan önerebilirsiniz.",
+      );
+    } catch (e) {
+      setCancelError((e as Error).message ?? "Plan önerisi iptal edilemedi.");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const submit = async () => {
+    if (pendingPlan) {
+      setError(
+        "Bu yara için onay bekleyen bir plan önerisi var. Yeni plan göndermeden önce mevcut öneriyi iptal edin.",
+      );
+      return;
+    }
     if (!submission) {
       setError("Bu yara için gönderim bulunamadı.");
       return;
@@ -152,6 +196,67 @@ export function AssessmentForm({
         }`}
         action={<StatusBadge status="assessment" />}
       />
+
+      {/* Onay bekleyen plan önerisi — iptal edilmeden yeni plan gönderilemez. */}
+      {pendingPlan && (
+        <Card style={{ marginBottom: 20 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontWeight: 800, color: "var(--text-heading)" }}>
+                Önerilen plan: {planTypeLabel[pendingPlan.type as PlanType]}
+              </div>
+              <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2 }}>
+                {formatKurus(pendingPlan.price_kurus)} · Öneri tarihi:{" "}
+                {formatDate(pendingPlan.created_at)}
+              </div>
+            </div>
+            <StatusBadge status="pending" />
+            <Button
+              variant="ghost"
+              onClick={cancelProposal}
+              disabled={cancelling}
+              style={{ color: "var(--danger)", padding: "9px 14px", fontSize: 13 }}
+            >
+              {cancelling ? "İptal ediliyor…" : "Plan önerisini iptal et"}
+            </Button>
+          </div>
+          {cancelError && (
+            <div
+              style={{
+                color: "var(--danger)",
+                fontSize: 13,
+                marginTop: 10,
+                fontWeight: 600,
+              }}
+            >
+              {cancelError}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {cancelInfo && !pendingPlan && (
+        <div
+          style={{
+            background: "var(--surface-green)",
+            color: "var(--primary)",
+            borderRadius: 12,
+            padding: "10px 14px",
+            marginBottom: 20,
+            fontWeight: 700,
+            fontSize: 13.5,
+          }}
+        >
+          {cancelInfo}
+        </div>
+      )}
 
       <div
         className="split-2col"
@@ -346,11 +451,17 @@ export function AssessmentForm({
                 </div>
               )}
 
-              <Button onClick={submit} disabled={submitting} style={{ width: "100%" }}>
+              <Button
+                onClick={submit}
+                disabled={submitting || pendingPlan !== null}
+                style={{ width: "100%" }}
+              >
                 {submitting ? "Gönderiliyor…" : "Planı hastaya gönder"}
               </Button>
               <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 10, textAlign: "center" }}>
-                Hasta onaylamadan takip akışı açılmaz, ücret alınmaz.
+                {pendingPlan
+                  ? "Onay bekleyen bir plan önerisi var — yeni plan göndermek için önce mevcut öneriyi iptal edin."
+                  : "Hasta onaylamadan takip akışı açılmaz, ücret alınmaz."}
               </p>
             </>
           )}

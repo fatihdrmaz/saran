@@ -4,7 +4,9 @@ import { getSupabase } from "./supabase";
  * Hasta bildirimleri — ayrı tablo YOK, mevcut verilerden türetilir (mobil ile
  * aynı desen): plans(proposed) → "Bakım planı öneriniz hazır",
  * messages(hemşireden, read_at null) → "Hemşirenizden N yeni mesaj",
- * son 30 gün payments(paid) → "Ödemeniz alındı".
+ * son 30 gün payments(paid) → "Ödemeniz alındı",
+ * son 30 gün payments(rejected) → "Havale bildiriminiz doğrulanamadı"
+ * (yalnızca listede görünür — okunmamış sayacına dahil edilmez).
  */
 
 export type NotificationKind = "plan" | "message" | "payment";
@@ -125,13 +127,33 @@ async function fetchRecentPaidPayments(): Promise<PaidPaymentRow[]> {
   return (data as unknown as PaidPaymentRow[]).filter((p) => p.paid_at != null);
 }
 
+type RejectedPaymentRow = {
+  id: string;
+  created_at: string;
+  plan: { wound_id: string } | null;
+};
+
+/** Son 30 günde reddedilmiş havale bildirimleri (hasta yeniden bildirebilir). */
+async function fetchRecentRejectedPayments(): Promise<RejectedPaymentRow[]> {
+  const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
+  const { data, error } = await getSupabase()
+    .from("payments")
+    .select("id,created_at,plan:plans(wound_id)")
+    .eq("status", "rejected")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false });
+  if (error || !data) return [];
+  return data as unknown as RejectedPaymentRow[];
+}
+
 /* ---------- Dışa açık API ---------- */
 
 /** Üç kaynaktan türetilmiş bildirim listesi (tarihe göre yeniden eskiye). */
 export async function getPatientNotifications(userId: string): Promise<PatientNotification[]> {
-  const [plans, payments, unreadMsgs] = await Promise.all([
+  const [plans, payments, rejectedPayments, unreadMsgs] = await Promise.all([
     fetchProposedPlans(),
     fetchRecentPaidPayments(),
+    fetchRecentRejectedPayments(),
     fetchUnreadNurseMessages(userId),
   ]);
 
@@ -166,6 +188,17 @@ export async function getPatientNotifications(userId: string): Promise<PatientNo
       kind: "payment",
       title: pay.receipt_no ? `Ödemeniz alındı — makbuz ${pay.receipt_no}` : "Ödemeniz alındı",
       date: pay.paid_at,
+      href: pay.plan?.wound_id ? `/hesabim/yara/${pay.plan.wound_id}` : "/hesabim",
+    });
+  }
+
+  for (const pay of rejectedPayments) {
+    items.push({
+      id: `payment-rejected-${pay.id}`,
+      kind: "payment",
+      title: "Havale bildiriminiz doğrulanamadı",
+      detail: "Tutarı ve IBAN'ı kontrol edip yeniden bildirebilirsiniz",
+      date: pay.created_at,
       href: pay.plan?.wound_id ? `/hesabim/yara/${pay.plan.wound_id}` : "/hesabim",
     });
   }

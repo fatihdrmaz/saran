@@ -31,6 +31,8 @@ type WoundFileData = {
   submissions: SubmissionRow[];
   payments: PaymentRow[];
   awaitingPlanIds: string[];
+  /** Son havale bildirimi reddedilmiş planlar (yeniden bildirilebilir). */
+  rejectedPlanIds: string[];
 };
 
 export function WoundFileView({ woundId }: { woundId: string }) {
@@ -78,11 +80,13 @@ export function WoundFileView({ woundId }: { woundId: string }) {
     const plans = (plansRes.data ?? []) as unknown as PlanRow[];
     const planIds = plans.map((p) => p.id);
 
-    // Bu yaranın planlarına ait ödemeler (ödenmiş) + havale bildirimi (awaiting).
+    // Bu yaranın planlarına ait ödemeler (ödenmiş) + havale bildirimleri
+    // (awaiting: doğrulama bekliyor / rejected: doğrulanamadı, yeniden bildirilebilir).
     let payments: PaymentRow[] = [];
     let awaitingPlanIds: string[] = [];
+    let rejectedPlanIds: string[] = [];
     if (planIds.length > 0) {
-      const [paysRes, awaitingRes] = await Promise.all([
+      const [paysRes, pendingRes] = await Promise.all([
         supabase
           .from("payments")
           .select("id,plan_id,amount_kurus,vat_kurus,receipt_no,paid_at,created_at")
@@ -91,16 +95,22 @@ export function WoundFileView({ woundId }: { woundId: string }) {
           .order("paid_at", { ascending: false }),
         supabase
           .from("payments")
-          .select("plan_id")
-          .eq("status", "awaiting_approval")
+          .select("plan_id,status")
+          .in("status", ["awaiting_approval", "rejected"])
           .in("plan_id", planIds),
       ]);
-      const payErr = paysRes.error ?? awaitingRes.error;
+      const payErr = paysRes.error ?? pendingRes.error;
       if (payErr) {
         throw new Error(`Ödemeleriniz yüklenemedi (${payErr.message}). Lütfen sayfayı yenileyin.`);
       }
       payments = (paysRes.data ?? []) as PaymentRow[];
-      awaitingPlanIds = (awaitingRes.data ?? [])
+      const pending = (pendingRes.data ?? []) as { plan_id: string | null; status: string }[];
+      awaitingPlanIds = pending
+        .filter((r) => r.status === "awaiting_approval")
+        .map((r) => r.plan_id)
+        .filter((v): v is string => v != null);
+      rejectedPlanIds = pending
+        .filter((r) => r.status === "rejected")
         .map((r) => r.plan_id)
         .filter((v): v is string => v != null);
     }
@@ -111,6 +121,7 @@ export function WoundFileView({ woundId }: { woundId: string }) {
       submissions: (subsRes.data ?? []) as SubmissionRow[],
       payments,
       awaitingPlanIds,
+      rejectedPlanIds,
     });
   }, [woundId]);
 
@@ -224,10 +235,12 @@ export function WoundFileView({ woundId }: { woundId: string }) {
     );
   }
 
-  const { wound, plan, submissions, payments, awaitingPlanIds } = data;
+  const { wound, plan, submissions, payments, awaitingPlanIds, rejectedPlanIds } = data;
   const badge = trackingBadge((plan?.status ?? null) as PlanStatus | null);
   const canUpload = plan?.status === PlanStatus.ACTIVE;
   const awaiting = plan ? awaitingPlanIds.includes(plan.id) : false;
+  // Bekleyen bildirim yokken reddedilmiş kayıt varsa hasta yeniden bildirebilir.
+  const rejected = plan ? !awaiting && rejectedPlanIds.includes(plan.id) : false;
 
   return (
     <section className="container" style={{ padding: "40px 24px 80px", maxWidth: 760 }}>
@@ -270,6 +283,7 @@ export function WoundFileView({ woundId }: { woundId: string }) {
         plan={plan}
         userId={userId}
         awaiting={awaiting}
+        rejected={rejected}
         approvingId={approvingId}
         payments={payments}
         onCreditCard={handleApprove}

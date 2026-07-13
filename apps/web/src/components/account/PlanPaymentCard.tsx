@@ -22,6 +22,8 @@ import {
  * Bir yaranın "Plan & Ödeme" bölümü.
  * - En güncel plan `proposed` ise: plan önerisi kartı + ödeme yöntemi
  *   (Kredi kartı "Yakında" / Havale IBAN akışı, awaiting_approval bandı).
+ *   Son havale bildirimi `rejected` ise kırmızı band + form yeniden kullanılabilir.
+ * - En güncel plan `cancelled` ise: nötr bilgi kutusu (öneri geri çekildi).
  * - Aktif/süresi dolmuş ise: başlangıç / bitiş / kalan gün.
  * - Ödendi ise: makbuz satırları.
  * Mevcut AccountView davranışı korunur — yalnızca yaranın içine taşındı.
@@ -81,6 +83,28 @@ function TransferRow({
   );
 }
 
+/** Kırmızı bilgi bandı — havale bildirimi hemşire tarafından doğrulanamadı. */
+function RejectedTransferBand() {
+  return (
+    <div
+      role="alert"
+      style={{
+        background: "var(--danger-bg)",
+        color: "var(--danger)",
+        fontSize: 14,
+        fontWeight: 600,
+        padding: "12px 16px",
+        borderRadius: 12,
+        lineHeight: 1.5,
+        marginBottom: 14,
+      }}
+    >
+      Havale bildiriminiz doğrulanamadı — ödeme hesabımıza ulaşmadı. Lütfen tutarı ve
+      IBAN&apos;ı kontrol edip yeniden bildirin ya da hemşirenizle mesajlaşın.
+    </div>
+  );
+}
+
 /** Turuncu bilgi bandı — havale bildirimi alındı, doğrulama bekleniyor. */
 function AwaitingTransferBand() {
   return (
@@ -105,6 +129,7 @@ function PlanProposalCard({
   plan,
   userId,
   awaiting,
+  rejected,
   approvingId,
   onCreditCard,
   onNotified,
@@ -112,6 +137,8 @@ function PlanProposalCard({
   plan: PlanRow;
   userId: string;
   awaiting: boolean;
+  /** Son havale bildirimi reddedildi — hasta yeniden bildirebilir. */
+  rejected: boolean;
   approvingId: string | null;
   onCreditCard: (planId: string) => void;
   onNotified: () => void;
@@ -235,6 +262,8 @@ function PlanProposalCard({
           {plan.prognosis_note}
         </div>
       )}
+
+      {!showAwaitingBand && rejected && <RejectedTransferBand />}
 
       {showAwaitingBand ? (
         <AwaitingTransferBand />
@@ -366,6 +395,7 @@ export function PlanPaymentCard({
   plan,
   userId,
   awaiting,
+  rejected,
   approvingId,
   payments,
   onCreditCard,
@@ -374,6 +404,8 @@ export function PlanPaymentCard({
   plan: PlanRow | null;
   userId: string;
   awaiting: boolean;
+  /** Planın son havale bildirimi reddedildi (ödeme hesaba geçmedi). */
+  rejected: boolean;
   approvingId: string | null;
   /** Bu yaranın ödenmiş ödemeleri (makbuz satırları). */
   payments: PaymentRow[];
@@ -381,6 +413,7 @@ export function PlanPaymentCard({
   onNotified: () => void;
 }) {
   const isProposed = plan?.status === PlanStatus.PROPOSED;
+  const isCancelled = plan?.status === PlanStatus.CANCELLED;
   const active = plan && isTrackingUnlocked(plan.status as PlanStatus) ? plan : null;
 
   return (
@@ -392,10 +425,18 @@ export function PlanPaymentCard({
           plan={plan}
           userId={userId}
           awaiting={awaiting}
+          rejected={rejected}
           approvingId={approvingId}
           onCreditCard={onCreditCard}
           onNotified={onNotified}
         />
+      ) : isCancelled ? (
+        <div style={cardStyle}>
+          <p style={{ fontSize: 15, color: "var(--text-muted)", lineHeight: 1.6 }}>
+            Hemşireniz plan önerisini geri çekti. Yeni bir öneri hazırlanıyorsa bildirim
+            alacaksınız; sorunuz için hemşirenizle mesajlaşabilirsiniz.
+          </p>
+        </div>
       ) : active ? (
         <div style={cardStyle}>
           <div

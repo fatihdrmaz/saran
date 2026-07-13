@@ -11,6 +11,7 @@ import {
   fetchAwaitingTransfers,
   fetchVisibleWounds,
   nameInitials,
+  rejectPayment,
   type AwaitingTransfer,
   type WoundCard,
 } from "../lib/queries";
@@ -21,6 +22,7 @@ export default function TodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [transfers, setTransfers] = useState<AwaitingTransfer[] | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [transferError, setTransferError] = useState<string | null>(null);
   const [transferSuccess, setTransferSuccess] = useState<string | null>(null);
 
@@ -64,6 +66,33 @@ export default function TodayPage() {
       setTransferError(res.error);
     }
   };
+
+  const rejectTransfer = async (t: AwaitingTransfer) => {
+    if (
+      !window.confirm(
+        `${t.patientName} için ${formatKurus(t.amountKurus)} tutarındaki havale bildirimini reddediyorsunuz. Ödemenin hesaba geçmediğini onaylıyor musunuz?`,
+      )
+    ) {
+      return;
+    }
+    setTransferError(null);
+    setTransferSuccess(null);
+    setRejectingId(t.paymentId);
+    const res = await rejectPayment(t.paymentId);
+    setRejectingId(null);
+    if (res.ok) {
+      setTransfers((list) =>
+        (list ?? []).filter((x) => x.paymentId !== t.paymentId),
+      );
+      setTransferSuccess(
+        `${t.patientName} — havale bildirimi reddedildi. Hasta ödemeyi yeniden bildirebilir.`,
+      );
+    } else {
+      setTransferError(res.error);
+    }
+  };
+
+  const transferBusy = confirmingId !== null || rejectingId !== null;
 
   const pool = (wounds ?? []).filter((w) => w.assignedNurseId === null);
   const assessmentQueue = (wounds ?? []).filter((w) => {
@@ -217,12 +246,24 @@ export default function TodayPage() {
                   </Pill>
                   <Button
                     onClick={() => approveTransfer(t)}
-                    disabled={confirmingId !== null}
+                    disabled={transferBusy}
                     style={{ padding: "9px 14px", fontSize: 13 }}
                   >
                     {confirmingId === t.paymentId
                       ? "Onaylanıyor…"
                       : "Ödemeyi onayla ve planı başlat"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => rejectTransfer(t)}
+                    disabled={transferBusy}
+                    style={{
+                      padding: "9px 14px",
+                      fontSize: 13,
+                      color: "var(--danger)",
+                    }}
+                  >
+                    {rejectingId === t.paymentId ? "Reddediliyor…" : "Reddet"}
                   </Button>
                 </div>
               ))}

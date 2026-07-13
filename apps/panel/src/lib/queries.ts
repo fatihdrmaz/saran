@@ -288,6 +288,29 @@ export async function createAssessmentAndPlan(
   return { planId: plan.id };
 }
 
+/**
+ * Bekleyen (proposed) plan önerisini iptal eder → status='cancelled'.
+ * RLS (plans_update): yalnızca planı öneren hemşire (veya admin) güncelleyebilir;
+ * yetki yoksa 0 satır döner → Türkçe hata fırlatılır.
+ */
+export async function cancelPlan(planId: string): Promise<void> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("plans")
+    .update({ status: PlanStatus.CANCELLED })
+    .eq("id", planId)
+    .eq("status", PlanStatus.PROPOSED)
+    .select("id");
+  if (error) {
+    throw new Error("Plan önerisi iptal edilemedi. Lütfen tekrar deneyin.");
+  }
+  if (!data || data.length === 0) {
+    throw new Error(
+      "Plan önerisi iptal edilemedi. Yalnızca kendi önerdiğiniz, onay bekleyen planları iptal edebilirsiniz.",
+    );
+  }
+}
+
 /** Plan süresinden ilerleme yüzdesi (started_at + PLAN_DURATION_DAYS). */
 export function planProgress(plan: PlanRow): {
   day: number | null;
@@ -432,6 +455,54 @@ export async function confirmPayment(
       };
     }
     return { ok: true, planId: body.planId ?? null };
+  } catch {
+    return {
+      ok: false,
+      error: "Sunucuya ulaşılamadı. Bağlantınızı kontrol edip tekrar deneyin.",
+    };
+  }
+}
+
+/**
+ * Havale ödemesini reddet (Edge Function: reject-payment).
+ * Başarı: payment → rejected; plan 'proposed' KALIR (hasta yeniden bildirebilir).
+ * Yetki: planı öneren hemşire veya admin; aksi halde 403 gövdesindeki Türkçe
+ * mesaj döndürülür. Fırlatmaz — {ok:true} veya {ok:false, error} döndürür.
+ */
+export async function rejectPayment(
+  paymentId: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const supabase = getSupabase();
+  try {
+    const { data, error } = await supabase.functions.invoke("reject-payment", {
+      body: { paymentId },
+    });
+    if (error) {
+      // FunctionsHttpError: asıl Türkçe mesaj yanıt gövdesinde (error.context).
+      let message = "Ödeme reddedilemedi. Lütfen tekrar deneyin.";
+      const ctx = (error as { context?: unknown }).context;
+      if (ctx instanceof Response) {
+        try {
+          const body = (await ctx.json()) as { error?: string } | null;
+          if (body?.error) message = body.error;
+        } catch {
+          /* gövde okunamadı — genel mesaj kalır */
+        }
+      } else if (error.message) {
+        message = error.message;
+      }
+      return { ok: false, error: message };
+    }
+    const body = data as
+      | { ok?: boolean; status?: string; error?: string }
+      | null;
+    if (!body?.ok) {
+      return {
+        ok: false,
+        error: body?.error ?? "Ödeme reddedilemedi. Lütfen tekrar deneyin.",
+      };
+    }
+    return { ok: true };
   } catch {
     return {
       ok: false,

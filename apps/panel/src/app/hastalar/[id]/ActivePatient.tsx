@@ -11,6 +11,7 @@ import {
   formatKurus,
   formatRelative,
   painLevelLabel,
+  paymentStatusBadge,
   planTypeLabel,
   woundTypeLabel,
 } from "../../../lib/labels";
@@ -22,6 +23,7 @@ import {
   fetchWoundPayments,
   markConversationRead,
   planProgress,
+  rejectPayment,
   sendMessage,
   type PaymentWithMeta,
   type WoundCard,
@@ -38,15 +40,6 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "messages", label: "Mesajlar" },
   { key: "payments", label: "Ödemeler" },
 ];
-
-const paymentBadge: Record<
-  PaymentStatus,
-  { label: string; status: "active" | "pending" | "assessment" }
-> = {
-  [PaymentStatus.PAID]: { label: "Ödendi", status: "active" },
-  [PaymentStatus.PENDING]: { label: "Bekliyor", status: "pending" },
-  [PaymentStatus.AWAITING_APPROVAL]: { label: "Onay bekliyor", status: "assessment" },
-};
 
 /** Akış öğesi: gönderim + mesaj karışık kronolojisi (yeni → eski). */
 type FeedItem =
@@ -89,6 +82,7 @@ export function ActivePatient({
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [confirmingPaymentId, setConfirmingPaymentId] = useState<string | null>(null);
+  const [rejectingPaymentId, setRejectingPaymentId] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
 
@@ -170,6 +164,35 @@ export function ActivePatient({
       setPaymentError(res.error);
     }
   };
+
+  const rejectPaymentRow = async (p: PaymentWithMeta) => {
+    if (
+      !window.confirm(
+        `${formatKurus(p.amount_kurus)} tutarındaki havale bildirimini reddediyorsunuz. Ödemenin hesaba geçmediğini onaylıyor musunuz?`,
+      )
+    ) {
+      return;
+    }
+    setPaymentError(null);
+    setPaymentSuccess(null);
+    setRejectingPaymentId(p.id);
+    const res = await rejectPayment(p.id);
+    setRejectingPaymentId(null);
+    if (res.ok) {
+      setPaymentSuccess(
+        "Havale bildirimi reddedildi — hasta ödemeyi yeniden bildirebilir.",
+      );
+      try {
+        setPayments(await fetchWoundPayments(selectedWoundId));
+      } catch {
+        /* tazeleme başarısızsa mevcut liste kalır */
+      }
+    } else {
+      setPaymentError(res.error);
+    }
+  };
+
+  const paymentBusy = confirmingPaymentId !== null || rejectingPaymentId !== null;
 
   const send = async () => {
     if (!draft.trim() || !conversationId) return;
@@ -568,7 +591,7 @@ export function ActivePatient({
                     <div style={{ color: "var(--text-muted)" }}>Ödeme kaydı yok.</div>
                   )}
                   {payments.map((p) => {
-                    const b = paymentBadge[p.status];
+                    const b = paymentStatusBadge[p.status];
                     return (
                       <div
                         key={p.id}
@@ -601,15 +624,31 @@ export function ActivePatient({
                           <span style={{ fontWeight: 800 }}>{formatKurus(p.amount_kurus)}</span>
                           <StatusBadge status={b.status} label={b.label} />
                           {p.status === PaymentStatus.AWAITING_APPROVAL && (
-                            <Button
-                              onClick={() => approvePayment(p)}
-                              disabled={confirmingPaymentId !== null}
-                              style={{ padding: "8px 12px", fontSize: 12.5 }}
-                            >
-                              {confirmingPaymentId === p.id
-                                ? "Onaylanıyor…"
-                                : "Ödemeyi onayla ve planı başlat"}
-                            </Button>
+                            <>
+                              <Button
+                                onClick={() => approvePayment(p)}
+                                disabled={paymentBusy}
+                                style={{ padding: "8px 12px", fontSize: 12.5 }}
+                              >
+                                {confirmingPaymentId === p.id
+                                  ? "Onaylanıyor…"
+                                  : "Ödemeyi onayla ve planı başlat"}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                onClick={() => rejectPaymentRow(p)}
+                                disabled={paymentBusy}
+                                style={{
+                                  padding: "8px 12px",
+                                  fontSize: 12.5,
+                                  color: "var(--danger)",
+                                }}
+                              >
+                                {rejectingPaymentId === p.id
+                                  ? "Reddediliyor…"
+                                  : "Reddet"}
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>

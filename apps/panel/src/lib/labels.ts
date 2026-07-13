@@ -5,10 +5,12 @@
 import {
   CareTemplateCategory,
   PainLevel,
+  PaymentStatus,
   PlanType,
   WoundClinicalStatus,
   WoundType,
 } from "@saran/shared";
+import type { StatusKey } from "@saran/tokens";
 
 export const clinicalStatusLabel: Record<WoundClinicalStatus, string> = {
   [WoundClinicalStatus.IMPROVING]: "İyileşiyor",
@@ -54,6 +56,23 @@ export const careCategoryLabel: Record<CareTemplateCategory, string> = {
   [CareTemplateCategory.SURGICAL]: "Cerrahi",
   [CareTemplateCategory.EMERGENCY_REFERRAL]: "Acil yönlendirme",
   [CareTemplateCategory.BURN]: "Yanık",
+};
+
+/**
+ * Ödeme durumu rozeti — etiket + StatusBadge rengi tüm ekranlarda tutarlı
+ * (Kazanç tablosu, ActivePatient Ödemeler sekmesi).
+ */
+export const paymentStatusBadge: Record<
+  PaymentStatus,
+  { label: string; status: StatusKey }
+> = {
+  [PaymentStatus.PAID]: { label: "Ödendi", status: "active" },
+  [PaymentStatus.PENDING]: { label: "Bekliyor", status: "pending" },
+  [PaymentStatus.AWAITING_APPROVAL]: {
+    label: "Onay bekliyor",
+    status: "assessment",
+  },
+  [PaymentStatus.REJECTED]: { label: "Reddedildi", status: "emergency" },
 };
 
 /** Para biçimlendirme (kuruş integer → ₺). */

@@ -8,17 +8,13 @@ import {
 } from "@saran/shared";
 import { Card, PageHeader, StatCard, StatusBadge } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
-import { formatDate, formatKurus, planTypeLabel } from "../../lib/labels";
+import {
+  formatDate,
+  formatKurus,
+  paymentStatusBadge,
+  planTypeLabel,
+} from "../../lib/labels";
 import { fetchNursePayments, type PaymentWithMeta } from "../../lib/queries";
-
-const paymentBadge: Record<
-  PaymentStatus,
-  { label: string; status: "active" | "pending" | "assessment" }
-> = {
-  [PaymentStatus.PAID]: { label: "Ödendi", status: "active" },
-  [PaymentStatus.PENDING]: { label: "Bekliyor", status: "pending" },
-  [PaymentStatus.AWAITING_APPROVAL]: { label: "Onay bekliyor", status: "assessment" },
-};
 
 const MONTHS_TR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 
@@ -201,7 +197,7 @@ export default function EarningsPage() {
                   </tr>
                 )}
                 {rows.map((p) => {
-                  const b = paymentBadge[p.status];
+                  const b = paymentStatusBadge[p.status];
                   return (
                     <tr key={p.id} style={{ borderTop: "1px solid var(--card-border)" }}>
                       <td style={{ padding: "12px 20px", fontWeight: 700 }}>{p.patientName}</td>
