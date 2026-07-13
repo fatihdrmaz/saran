@@ -180,10 +180,10 @@ export default function Reviews() {
               <Card key={r.id}>
                 <View style={styles.reviewHead}>
                   <View style={styles.avatar}>
-                    <Text style={styles.avatarText}>{initials(r.patient_id)}</Text>
+                    <Text style={styles.avatarText}>{initials(r.display_name ?? "Hasta")}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.author}>Hasta</Text>
+                    <Text style={styles.author}>{r.display_name ?? "Hasta"}</Text>
                     <Text style={styles.reviewMeta}>
                       {woundTypeLabel(r.wound_type)}
                       {r.duration_label ? ` · ${r.duration_label}` : ""}
