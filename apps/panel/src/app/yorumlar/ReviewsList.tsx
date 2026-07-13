@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import type { WoundType } from "@saran/shared";
-import { Button, Card, Pill, WoundPhoto } from "../../components/ui";
+import { Button, Card, Pill } from "../../components/ui";
 import { useAuth } from "../../lib/auth";
 import { formatDate, woundTypeLabel } from "../../lib/labels";
 import {
   deleteReview,
   fetchAllReviews,
   type ReviewWithMeta,
+  revokeReviewConsent,
 } from "../../lib/queries";
+import { CaseForm } from "./CaseForm";
 
 function Stars({ rating }: { rating: number }) {
   const full = Math.max(0, Math.min(5, Math.round(rating)));
@@ -27,6 +29,7 @@ export function ReviewsList() {
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -57,14 +60,54 @@ export function ReviewsList() {
     }
   };
 
+  const revokeConsent = async (id: string) => {
+    if (
+      !window.confirm(
+        "Bu vakanın yayın rızası geri çekilsin mi? Görseller yayından düşer.",
+      )
+    )
+      return;
+    setBusyId(id);
+    setActionError(null);
+    try {
+      await revokeReviewConsent(id);
+      setReviews((prev) =>
+        (prev ?? []).map((r) =>
+          r.id === id ? { ...r, consent_confirmed: false } : r,
+        ),
+      );
+    } catch (e) {
+      setActionError(
+        e instanceof Error ? e.message : "Rıza geri çekilemedi.",
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const onCreated = (review: ReviewWithMeta) => {
+    setReviews((prev) => [review, ...(prev ?? [])]);
+    setShowForm(false);
+  };
+
   if (error) return <div style={{ color: "var(--danger)" }}>{error}</div>;
   if (reviews === null)
     return <div style={{ color: "var(--text-muted)" }}>Yükleniyor…</div>;
-  if (reviews.length === 0)
-    return <div style={{ color: "var(--text-muted)" }}>Henüz yorum yok.</div>;
 
   return (
     <>
+      <div style={{ marginBottom: 20 }}>
+        {showForm ? (
+          <CaseForm onCreated={onCreated} onCancel={() => setShowForm(false)} />
+        ) : (
+          <Button onClick={() => setShowForm(true)}>Öne çıkan vaka ekle</Button>
+        )}
+      </div>
+
+      {reviews.length === 0 && !showForm && (
+        <div style={{ color: "var(--text-muted)" }}>Henüz yorum yok.</div>
+      )}
+
       {actionError && (
         <div
           style={{
@@ -110,6 +153,15 @@ export function ReviewsList() {
                     {r.duration_label}
                   </Pill>
                 )}
+                {r.consent_confirmed ? (
+                  <Pill bg="var(--surface-green)" fg="var(--primary)">
+                    Yayında
+                  </Pill>
+                ) : (
+                  <Pill bg="var(--surface)" fg="var(--danger)">
+                    Rıza yok
+                  </Pill>
+                )}
               </div>
 
               <p style={{ fontSize: 13.5, color: "var(--text-body)", lineHeight: 1.5 }}>
@@ -122,13 +174,43 @@ export function ReviewsList() {
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 4 }}>
                       Önce
                     </div>
-                    <WoundPhoto label="hasta onaylı" height={120} />
+                    {r.before_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.before_image_url}
+                        alt="Önce"
+                        style={{
+                          width: "100%",
+                          height: 120,
+                          objectFit: "cover",
+                          borderRadius: 12,
+                          border: "1px solid var(--card-border)",
+                        }}
+                      />
+                    ) : (
+                      <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
+                    )}
                   </div>
                   <div>
                     <div style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", marginBottom: 4 }}>
                       Sonra
                     </div>
-                    <WoundPhoto label="hasta onaylı" height={120} />
+                    {r.after_image_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.after_image_url}
+                        alt="Sonra"
+                        style={{
+                          width: "100%",
+                          height: 120,
+                          objectFit: "cover",
+                          borderRadius: 12,
+                          border: "1px solid var(--card-border)",
+                        }}
+                      />
+                    ) : (
+                      <div style={{ fontSize: 12, color: "var(--text-muted)" }}>—</div>
+                    )}
                   </div>
                 </div>
               )}
@@ -145,14 +227,26 @@ export function ReviewsList() {
                 <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
                   {r.patientName}
                 </span>
-                <Button
-                  variant="ghost"
-                  onClick={() => remove(r.id)}
-                  disabled={busyId === r.id}
-                  style={{ color: "var(--danger)", padding: "7px 14px", fontSize: 13 }}
-                >
-                  {busyId === r.id ? "…" : "Sil"}
-                </Button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {r.consent_confirmed && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => revokeConsent(r.id)}
+                      disabled={busyId === r.id}
+                      style={{ padding: "7px 14px", fontSize: 13 }}
+                    >
+                      {busyId === r.id ? "…" : "Rızayı geri çek"}
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    onClick={() => remove(r.id)}
+                    disabled={busyId === r.id}
+                    style={{ color: "var(--danger)", padding: "7px 14px", fontSize: 13 }}
+                  >
+                    {busyId === r.id ? "…" : "Sil"}
+                  </Button>
+                </div>
               </div>
             </Card>
           );

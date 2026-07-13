@@ -3,10 +3,11 @@ import Link from "next/link";
 import { FIRST_ASSESSMENT_FREE } from "@saran/shared";
 import { colors } from "@saran/tokens";
 import { PageShell } from "../components/PageShell";
-import { SectionHeader, BlurSlot, Pill } from "../components/ui";
+import { SectionHeader, Pill } from "../components/ui";
 import { Check } from "../components/Icons";
 import { HeroMockup } from "../components/HeroMockup";
-import { fetchReviews } from "../lib/reviews";
+import { ReviewCard } from "../components/ReviewCard";
+import { fetchReviews, hasCaseImages } from "../lib/reviews";
 import { fetchProducts } from "../lib/products";
 import { JsonLd, faqJsonLd } from "../components/JsonLd";
 
@@ -550,104 +551,14 @@ export default async function HomePage() {
             <>
               <div className="cards-3">
                 {reviews.map((s) => (
-                  <article
-                    key={s.id}
-                    style={{
-                      background: "#fff",
-                      borderRadius: 22,
-                      padding: 18,
-                      border: "1px solid var(--card-border)",
-                    }}
-                  >
-                    <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                      <BlurSlot gradient={s.before} aspectRatio="4 / 3" radius={12} label="Önce görseli (hasta onaylı, bulanık)">
-                        <span
-                          style={{
-                            position: "absolute",
-                            left: 7,
-                            top: 7,
-                            background: "rgba(24,48,42,.72)",
-                            color: "#fff",
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          Önce
-                        </span>
-                      </BlurSlot>
-                      <BlurSlot gradient={s.after} aspectRatio="4 / 3" radius={12} label="Sonra görseli (hasta onaylı, bulanık)">
-                        <span
-                          style={{
-                            position: "absolute",
-                            left: 7,
-                            top: 7,
-                            background: "rgba(31,163,122,.9)",
-                            color: "#fff",
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: "3px 8px",
-                            borderRadius: 6,
-                          }}
-                        >
-                          Sonra
-                        </span>
-                      </BlurSlot>
-                    </div>
-                    <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                      <Pill bg="var(--success-bg)" color="var(--success-text)">{s.woundLabel}</Pill>
-                      {s.durationLabel && (
-                        <Pill bg="var(--surface-alt)" color="var(--text-muted)">{s.durationLabel}</Pill>
-                      )}
-                    </div>
-                    <p
-                      style={{
-                        fontFamily: "var(--font-heading)",
-                        fontSize: 17,
-                        lineHeight: 1.55,
-                        color: "#2a3d38",
-                        fontStyle: "italic",
-                        marginBottom: 16,
-                      }}
-                    >
-                      “{s.quote}”
-                    </p>
-                    <div style={{ display: "flex", alignItems: "center", gap: 11 }}>
-                      <div
-                        style={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: "50%",
-                          background: "#cfe6dd",
-                          color: "var(--primary)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontWeight: 800,
-                        }}
-                      >
-                        {s.initial}
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-heading)" }}>{s.name}</div>
-                        <div
-                          aria-label={`${s.rating} / 5 yıldız`}
-                          style={{ fontSize: 13, color: "var(--star-text, #b7791f)", letterSpacing: 1 }}
-                        >
-                          <span aria-hidden>
-                            {"★".repeat(s.rating)}
-                            <span style={{ opacity: 0.3 }}>{"★".repeat(5 - s.rating)}</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </article>
+                  <ReviewCard key={s.id} review={s} />
                 ))}
               </div>
-              <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted-alt)", marginTop: 20 }}>
-                Görseller hasta onaylıdır ve mahremiyet için bulanıklaştırılmıştır.
-              </p>
+              {reviews.some(hasCaseImages) && (
+                <p style={{ textAlign: "center", fontSize: 12, color: "var(--text-muted-alt)", marginTop: 20 }}>
+                  Görseller hasta onaylıdır ve mahremiyet için bulanıklaştırılmıştır.
+                </p>
+              )}
               <p style={{ textAlign: "center", marginTop: 14 }}>
                 <Link
                   href="/yorumlar"

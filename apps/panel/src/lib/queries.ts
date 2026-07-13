@@ -13,6 +13,7 @@ import {
   PaymentStatus,
   PlanStatus,
   type PlanType,
+  type WoundType,
 } from "@saran/shared";
 import { getSupabase } from "./supabase";
 
@@ -912,6 +913,68 @@ export async function deleteReview(id: string): Promise<void> {
   const supabase = getSupabase();
   const { error } = await supabase.from("reviews").delete().eq("id", id);
   if (error) throw error;
+}
+
+/** Yayın rızasını geri çek — görseller yayından düşer (consent_confirmed=false). */
+export async function revokeReviewConsent(id: string): Promise<void> {
+  const supabase = getSupabase();
+  const { error } = await supabase
+    .from("reviews")
+    .update({ consent_confirmed: false })
+    .eq("id", id);
+  if (error) throw error;
+}
+
+/**
+ * Öne çıkan vaka görselini public `case-images` bucket'ına yükler (admin).
+ * `name` bucket içindeki yol (ör. `<uuid>/before.jpg`). Public URL döner.
+ */
+export async function uploadCaseImage(file: File, name: string): Promise<string> {
+  const supabase = getSupabase();
+  const { error } = await supabase.storage
+    .from("case-images")
+    .upload(name, file, { upsert: true, contentType: file.type });
+  if (error) throw error;
+  return supabase.storage.from("case-images").getPublicUrl(name).data.publicUrl;
+}
+
+export interface CaseReviewInput {
+  displayName: string;
+  woundType: WoundType;
+  durationLabel: string;
+  rating: number;
+  text: string;
+  beforeImageUrl: string;
+  afterImageUrl: string;
+}
+
+/**
+ * Öne çıkan vaka (önce/sonra görselli) yorum oluşturur. Yayın rızası alındığı
+ * için consent_confirmed=true; hastaya bağlı olmadığından patient_id=null.
+ * Eklenen satırı liste için hazır (patientName ile) döner.
+ */
+export async function createCaseReview(
+  input: CaseReviewInput,
+): Promise<ReviewWithMeta> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reviews")
+    .insert({
+      display_name: input.displayName,
+      wound_type: input.woundType,
+      duration_label: input.durationLabel,
+      rating: input.rating,
+      text: input.text,
+      before_image_url: input.beforeImageUrl,
+      after_image_url: input.afterImageUrl,
+      consent_confirmed: true,
+      patient_id: null,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  const row = data as ReviewRow;
+  return { ...row, patientName: row.display_name ?? "Vaka" };
 }
 
 /* ----------------------------- ÜRÜNLER (PLAN_PRODUCTS) ----------------------------- */

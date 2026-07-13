@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageShell } from "../../components/PageShell";
-import { Pill } from "../../components/ui";
-import { fetchReviews } from "../../lib/reviews";
+import { ReviewCard } from "../../components/ReviewCard";
+import { fetchReviews, hasCaseImages } from "../../lib/reviews";
 
 export const metadata: Metadata = {
   title: "Hasta Yorumları — Yara Takibi Uzaktan Yara Bakımı",
@@ -108,70 +108,21 @@ export default async function ReviewsPage() {
           <>
             <div className="cards-3" style={{ alignItems: "start" }}>
               {reviews.map((r) => (
-                <article
-                  key={r.id}
-                  style={{
-                    background: "#fff",
-                    borderRadius: 22,
-                    padding: 22,
-                    border: "1px solid var(--card-border)",
-                  }}
-                >
-                  <div
-                    aria-label={`${r.rating} / 5 yıldız`}
-                    style={{ fontSize: 15, color: "var(--star-text)", letterSpacing: 1, marginBottom: 12 }}
-                  >
-                    <span aria-hidden>
-                      {"★".repeat(r.rating)}
-                      <span style={{ opacity: 0.3 }}>{"★".repeat(5 - r.rating)}</span>
-                    </span>
-                  </div>
-                  <p
-                    style={{
-                      fontFamily: "var(--font-heading)",
-                      fontSize: 17,
-                      lineHeight: 1.55,
-                      color: "#2a3d38",
-                      fontStyle: "italic",
-                      marginBottom: 14,
-                    }}
-                  >
-                    “{r.quote}”
-                  </p>
-                  <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
-                    <Pill bg="var(--success-bg)" color="var(--success-text)">
-                      {r.woundLabel}
-                    </Pill>
-                    {r.durationLabel && (
-                      <Pill bg="var(--surface-alt)" color="var(--text-muted)">
-                        {r.durationLabel}
-                      </Pill>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: "50%",
-                        background: "#cfe6dd",
-                        color: "var(--primary)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontWeight: 800,
-                        fontSize: 14,
-                      }}
-                    >
-                      {r.initial}
-                    </div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: "var(--text-heading)" }}>
-                      {r.name}
-                    </div>
-                  </div>
-                </article>
+                <ReviewCard key={r.id} review={r} />
               ))}
             </div>
+            {reviews.some(hasCaseImages) && (
+              <p
+                style={{
+                  textAlign: "center",
+                  fontSize: 12,
+                  color: "var(--text-muted-alt)",
+                  marginTop: 22,
+                }}
+              >
+                Görseller hasta onaylıdır ve mahremiyet için bulanıklaştırılmıştır.
+              </p>
+            )}
             <p
               style={{
                 textAlign: "center",

@@ -3,7 +3,8 @@
  * İçerik Supabase `reviews` tablosundan (anon, server-side) gelir.
  * `articles.ts` kalıbı: DB hatasında boş liste döner ki `next build` kırılmasın.
  *
- * DB kolonları: display_name, rating, text, wound_type, duration_label, created_at.
+ * DB kolonları: display_name, rating, text, wound_type, duration_label,
+ * before_image_url, after_image_url, consent_confirmed, created_at.
  */
 
 import { getSupabase } from "./supabase";
@@ -23,9 +24,20 @@ export interface Review {
   woundLabel: string;
   /** Süre rozeti (ör. "6 haftada") — yoksa null */
   durationLabel: string | null;
-  /** Önce/sonra placeholder gradyanları */
-  before: string;
-  after: string;
+  /** Önce görselinin public URL'i (case-images) — yoksa null */
+  beforeImageUrl: string | null;
+  /** Sonra görselinin public URL'i (case-images) — yoksa null */
+  afterImageUrl: string | null;
+  /** Hasta görsel paylaşımını onayladı mı — yalnızca true ise görsel gösterilir */
+  consentConfirmed: boolean;
+}
+
+/**
+ * Kartta gerçek önce/sonra görseli gösterilebilir mi?
+ * Yalnızca hasta onaylıysa VE her iki görsel de mevcutsa.
+ */
+export function hasCaseImages(r: Review): boolean {
+  return r.consentConfirmed && !!r.beforeImageUrl && !!r.afterImageUrl;
 }
 
 /** wound_type enum → TR etiket. */
@@ -37,13 +49,6 @@ const WOUND_LABELS: Record<string, string> = {
   burn: "Yanık yarası",
 };
 
-/** Önce/sonra placeholder gradyanları (sunum amaçlı, sırayla döner). */
-const GRADIENTS: { before: string; after: string }[] = [
-  { before: "#c9a593, #a87a66", after: "#e0cfb2, #cbb592" },
-  { before: "#be8e78, #a06a52", after: "#e2d2b6, #cdb994" },
-  { before: "#c49a86, #a2705a", after: "#e4d4b8, #cfbb96" },
-];
-
 /** DB `reviews` satırının seçtiğimiz alt kümesi. */
 type ReviewRow = {
   id: string;
@@ -52,6 +57,9 @@ type ReviewRow = {
   text: string;
   wound_type: string;
   duration_label: string | null;
+  before_image_url: string | null;
+  after_image_url: string | null;
+  consent_confirmed: boolean | null;
 };
 
 /**
@@ -67,9 +75,8 @@ function toDurationBadge(raw: string | null): string | null {
   return trimmed;
 }
 
-function toReview(row: ReviewRow, index: number): Review {
+function toReview(row: ReviewRow): Review {
   const name = row.display_name?.trim() || "Yara Takibi hastası";
-  const gradient = GRADIENTS[index % GRADIENTS.length];
   return {
     id: row.id,
     quote: row.text,
@@ -78,8 +85,9 @@ function toReview(row: ReviewRow, index: number): Review {
     rating: Math.max(1, Math.min(5, Math.round(row.rating))),
     woundLabel: WOUND_LABELS[row.wound_type] ?? "Yara takibi",
     durationLabel: toDurationBadge(row.duration_label),
-    before: gradient.before,
-    after: gradient.after,
+    beforeImageUrl: row.before_image_url?.trim() || null,
+    afterImageUrl: row.after_image_url?.trim() || null,
+    consentConfirmed: row.consent_confirmed === true,
   };
 }
 
@@ -93,7 +101,9 @@ export async function fetchReviews(limit = 6): Promise<Review[]> {
     const supabase = getSupabase();
     const { data, error } = await supabase
       .from("reviews")
-      .select("id, display_name, rating, text, wound_type, duration_label")
+      .select(
+        "id, display_name, rating, text, wound_type, duration_label, before_image_url, after_image_url, consent_confirmed",
+      )
       .order("created_at", { ascending: false })
       .limit(limit);
 

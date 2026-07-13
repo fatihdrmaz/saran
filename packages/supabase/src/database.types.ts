@@ -686,11 +686,12 @@ export type Database = {
         Row: {
           after_image_url: string | null
           before_image_url: string | null
+          consent_confirmed: boolean
           created_at: string
           display_name: string | null
           duration_label: string | null
           id: string
-          patient_id: string
+          patient_id: string | null
           rating: number
           text: string
           wound_type: Database["public"]["Enums"]["wound_type"]
@@ -698,11 +699,12 @@ export type Database = {
         Insert: {
           after_image_url?: string | null
           before_image_url?: string | null
+          consent_confirmed?: boolean
           created_at?: string
           display_name?: string | null
           duration_label?: string | null
           id?: string
-          patient_id: string
+          patient_id?: string | null
           rating: number
           text: string
           wound_type: Database["public"]["Enums"]["wound_type"]
@@ -710,11 +712,12 @@ export type Database = {
         Update: {
           after_image_url?: string | null
           before_image_url?: string | null
+          consent_confirmed?: boolean
           created_at?: string
           display_name?: string | null
           duration_label?: string | null
           id?: string
-          patient_id?: string
+          patient_id?: string | null
           rating?: number
           text?: string
           wound_type?: Database["public"]["Enums"]["wound_type"]
