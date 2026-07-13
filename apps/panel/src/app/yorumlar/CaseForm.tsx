@@ -7,6 +7,7 @@ import { woundTypeLabel } from "../../lib/labels";
 import {
   createCaseReview,
   type ReviewWithMeta,
+  updateCaseReview,
   uploadCaseImage,
 } from "../../lib/queries";
 
@@ -89,24 +90,38 @@ function ImagePicker({
 }
 
 export function CaseForm({
-  onCreated,
+  initial,
+  onSaved,
   onCancel,
 }: {
-  onCreated: (review: ReviewWithMeta) => void;
+  /** Varsa DÜZENLEME modu: alanlar dolu başlar, mevcut görseller korunur. */
+  initial?: ReviewWithMeta;
+  onSaved: (review: ReviewWithMeta) => void;
   onCancel: () => void;
 }) {
-  const [displayName, setDisplayName] = useState("");
-  const [woundType, setWoundType] = useState<WoundType>(WoundType.PRESSURE);
-  const [durationLabel, setDurationLabel] = useState("");
-  const [rating, setRating] = useState(5);
-  const [text, setText] = useState("");
+  const isEdit = Boolean(initial);
+
+  const [displayName, setDisplayName] = useState(initial?.display_name ?? "");
+  const [woundType, setWoundType] = useState<WoundType>(
+    (initial?.wound_type as WoundType) ?? WoundType.PRESSURE,
+  );
+  const [durationLabel, setDurationLabel] = useState(
+    initial?.duration_label ?? "",
+  );
+  const [rating, setRating] = useState(initial?.rating ?? 5);
+  const [text, setText] = useState(initial?.text ?? "");
+
+  // Mevcut (kayıtlı) görsel URL'leri — yeni dosya seçilmeyen taraf bunları korur.
+  const existingBefore = initial?.before_image_url ?? null;
+  const existingAfter = initial?.after_image_url ?? null;
 
   const [beforeFile, setBeforeFile] = useState<File | null>(null);
   const [afterFile, setAfterFile] = useState<File | null>(null);
+  // Yalnızca yeni seçilen dosyaların objectURL önizlemeleri (blob:).
   const [beforeUrl, setBeforeUrl] = useState<string | null>(null);
   const [afterUrl, setAfterUrl] = useState<string | null>(null);
 
-  const [consent, setConsent] = useState(false);
+  const [consent, setConsent] = useState(initial?.consent_confirmed ?? false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -135,51 +150,88 @@ export function CaseForm({
     setError(err);
   };
 
-  const canSave =
-    consent &&
-    !busy &&
+  // Kayıt sonrası her tarafta görsel olup olmayacağı (yeni dosya YA DA mevcut URL).
+  const hasBefore = Boolean(beforeFile || existingBefore);
+  const hasAfter = Boolean(afterFile || existingAfter);
+  const hasAnyImage = hasBefore || hasAfter;
+  // Önce/sonra ikisi ya birlikte dolu ya birlikte boş olmalı.
+  const imagesPaired = hasBefore === hasAfter;
+  // Görsel varsa (mevcut ya da yeni) yayın rızası zorunlu; hiç görsel yoksa opsiyonel.
+  const consentOk = hasAnyImage ? consent : true;
+
+  const fieldsOk =
     displayName.trim().length >= 2 &&
     durationLabel.trim().length >= 1 &&
-    text.trim().length >= 3 &&
-    Boolean(beforeFile) &&
-    Boolean(afterFile);
+    text.trim().length >= 3;
+
+  const canSave = isEdit
+    ? !busy && fieldsOk && imagesPaired && consentOk
+    : !busy && fieldsOk && Boolean(beforeFile) && Boolean(afterFile) && consent;
 
   /** Butonun neden pasif olduğunu kullanıcıya söyle (sessiz pasiflik kafa karıştırıyor). */
   const missing: string[] = [];
   if (displayName.trim().length < 2) missing.push("görünen ad");
   if (durationLabel.trim().length < 1) missing.push("süre etiketi");
   if (text.trim().length < 3) missing.push("alıntı");
-  if (!beforeFile) missing.push("önce fotoğrafı");
-  if (!afterFile) missing.push("sonra fotoğrafı");
-  if (!consent) missing.push("rıza onayı");
+  if (isEdit) {
+    if (hasBefore && !hasAfter) missing.push("sonra fotoğrafı (önce doluyken)");
+    if (!hasBefore && hasAfter) missing.push("önce fotoğrafı (sonra doluyken)");
+    if (hasAnyImage && !consent) missing.push("rıza onayı");
+  } else {
+    if (!beforeFile) missing.push("önce fotoğrafı");
+    if (!afterFile) missing.push("sonra fotoğrafı");
+    if (!consent) missing.push("rıza onayı");
+  }
 
   const save = async () => {
-    if (!consent) {
-      setError("Kaydetmek için yayın rızası kutusunu onaylayın.");
-      return;
-    }
-    if (!beforeFile || !afterFile) {
-      setError("Önce ve sonra fotoğraflarının ikisi de gereklidir.");
-      return;
-    }
+    if (!canSave) return;
     setBusy(true);
     setError(null);
     try {
-      const folder = crypto.randomUUID();
-      const [beforeImageUrl, afterImageUrl] = await Promise.all([
-        uploadCaseImage(beforeFile, `${folder}/before.jpg`),
-        uploadCaseImage(afterFile, `${folder}/after.jpg`),
-      ]);
-      const review = await createCaseReview({
-        displayName: displayName.trim(),
-        woundType,
-        durationLabel: durationLabel.trim(),
-        rating,
-        text: text.trim(),
-        beforeImageUrl,
-        afterImageUrl,
-      });
-      onCreated(review);
+      let review: ReviewWithMeta;
+      if (isEdit && initial) {
+        // Yalnızca DEĞİŞEN dosyaları yükle (yeni uuid klasörüne); diğer taraf
+        // mevcut URL'ini korur.
+        const folder = crypto.randomUUID();
+        const [beforeImageUrl, afterImageUrl] = await Promise.all([
+          beforeFile
+            ? uploadCaseImage(beforeFile, `${folder}/before.jpg`)
+            : Promise.resolve(existingBefore),
+          afterFile
+            ? uploadCaseImage(afterFile, `${folder}/after.jpg`)
+            : Promise.resolve(existingAfter),
+        ]);
+        review = await updateCaseReview(initial.id, {
+          displayName: displayName.trim(),
+          woundType,
+          durationLabel: durationLabel.trim(),
+          rating,
+          text: text.trim(),
+          beforeImageUrl,
+          afterImageUrl,
+          consentConfirmed: hasAnyImage ? true : consent,
+        });
+      } else {
+        if (!beforeFile || !afterFile) {
+          setError("Önce ve sonra fotoğraflarının ikisi de gereklidir.");
+          return;
+        }
+        const folder = crypto.randomUUID();
+        const [beforeImageUrl, afterImageUrl] = await Promise.all([
+          uploadCaseImage(beforeFile, `${folder}/before.jpg`),
+          uploadCaseImage(afterFile, `${folder}/after.jpg`),
+        ]);
+        review = await createCaseReview({
+          displayName: displayName.trim(),
+          woundType,
+          durationLabel: durationLabel.trim(),
+          rating,
+          text: text.trim(),
+          beforeImageUrl,
+          afterImageUrl,
+        });
+      }
+      onSaved(review);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Vaka kaydedilemedi.");
     } finally {
@@ -190,7 +242,7 @@ export function CaseForm({
   return (
     <Card style={{ maxWidth: 720, display: "grid", gap: 14, marginBottom: 24 }}>
       <div style={{ fontSize: 16, fontWeight: 700, color: "var(--text-heading)" }}>
-        Öne çıkan vaka ekle
+        {isEdit ? "Yorumu düzenle" : "Öne çıkan vaka ekle"}
       </div>
 
       <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
@@ -259,16 +311,23 @@ export function CaseForm({
         <ImagePicker
           title="Önce fotoğrafı"
           file={beforeFile}
-          previewUrl={beforeUrl}
+          previewUrl={beforeUrl ?? existingBefore}
           onPick={pickBefore}
         />
         <ImagePicker
           title="Sonra fotoğrafı"
           file={afterFile}
-          previewUrl={afterUrl}
+          previewUrl={afterUrl ?? existingAfter}
           onPick={pickAfter}
         />
       </div>
+
+      {isEdit && (existingBefore || existingAfter) && (
+        <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>
+          Mevcut görseller korunur; yalnızca değiştirmek istediğiniz taraf için
+          yeni dosya seçin.
+        </div>
+      )}
 
       <label
         style={{
@@ -293,6 +352,12 @@ export function CaseForm({
         <span>
           Bu görsellerin yayınlanması için hastadan yazılı açık rıza alındığını ve
           saklandığını onaylıyorum.
+          {isEdit && !hasAnyImage && (
+            <span style={{ color: "var(--text-muted)" }}>
+              {" "}
+              (görsel bulunmadığı için zorunlu değil)
+            </span>
+          )}
         </span>
       </label>
 
@@ -304,7 +369,11 @@ export function CaseForm({
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <Button onClick={save} disabled={!canSave}>
-          {busy ? "Kaydediliyor…" : "Vakayı kaydet"}
+          {busy
+            ? "Kaydediliyor…"
+            : isEdit
+              ? "Değişiklikleri kaydet"
+              : "Vakayı kaydet"}
         </Button>
         <Button variant="ghost" onClick={onCancel} disabled={busy}>
           Vazgeç

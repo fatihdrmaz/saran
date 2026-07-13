@@ -1048,6 +1048,54 @@ export async function createCaseReview(
   return { ...row, patientName: row.display_name ?? "Vaka" };
 }
 
+export interface UpdateCaseReviewInput {
+  displayName: string;
+  woundType: WoundType;
+  durationLabel: string;
+  rating: number;
+  text: string;
+  /** null → görsel yok. İkisi ya birlikte dolu ya birlikte boş olmalı (form zorlar). */
+  beforeImageUrl: string | null;
+  afterImageUrl: string | null;
+  /** Görsel varsa true olmalı; hiç görsel yoksa false kalabilir. */
+  consentConfirmed: boolean;
+}
+
+/**
+ * Mevcut yorumu (öne çıkan vaka) günceller. RLS: yalnızca admin (reviews ALL).
+ * Güncellenen satırı liste için hazır (patientName ile) döner.
+ */
+export async function updateCaseReview(
+  id: string,
+  input: UpdateCaseReviewInput,
+): Promise<ReviewWithMeta> {
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("reviews")
+    .update({
+      display_name: input.displayName,
+      wound_type: input.woundType,
+      duration_label: input.durationLabel,
+      rating: input.rating,
+      text: input.text,
+      before_image_url: input.beforeImageUrl,
+      after_image_url: input.afterImageUrl,
+      consent_confirmed: input.consentConfirmed,
+    })
+    .eq("id", id)
+    .select(
+      `*,
+       patient:patients!reviews_patient_id_fkey ( profile:profiles!patients_id_fkey ( full_name ) )`,
+    )
+    .single();
+  if (error) throw error;
+  const row = data as unknown as ReviewJoin;
+  return {
+    ...row,
+    patientName: row.patient?.profile?.full_name ?? row.display_name ?? "Hasta",
+  };
+}
+
 /* ----------------------------- ÜRÜNLER (PLAN_PRODUCTS) ----------------------------- */
 
 /**

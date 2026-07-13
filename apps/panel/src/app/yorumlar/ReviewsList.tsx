@@ -30,6 +30,9 @@ export function ReviewsList() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<ReviewWithMeta | null>(null);
+  // Tek form instance'ı: ya yeni vaka ya düzenleme.
+  const formOpen = showForm || editing !== null;
 
   useEffect(() => {
     if (!user) return;
@@ -85,9 +88,20 @@ export function ReviewsList() {
     }
   };
 
-  const onCreated = (review: ReviewWithMeta) => {
-    setReviews((prev) => [review, ...(prev ?? [])]);
+  const closeForm = () => {
     setShowForm(false);
+    setEditing(null);
+  };
+
+  /** Yeni vaka → listenin başına; düzenleme → satırı yerinde güncelle. */
+  const onSaved = (review: ReviewWithMeta) => {
+    setReviews((prev) => {
+      const list = prev ?? [];
+      return list.some((r) => r.id === review.id)
+        ? list.map((r) => (r.id === review.id ? review : r))
+        : [review, ...list];
+    });
+    closeForm();
   };
 
   if (error) return <div style={{ color: "var(--danger)" }}>{error}</div>;
@@ -97,14 +111,19 @@ export function ReviewsList() {
   return (
     <>
       <div style={{ marginBottom: 20 }}>
-        {showForm ? (
-          <CaseForm onCreated={onCreated} onCancel={() => setShowForm(false)} />
+        {formOpen ? (
+          <CaseForm
+            key={editing?.id ?? "new"}
+            initial={editing ?? undefined}
+            onSaved={onSaved}
+            onCancel={closeForm}
+          />
         ) : (
           <Button onClick={() => setShowForm(true)}>Öne çıkan vaka ekle</Button>
         )}
       </div>
 
-      {reviews.length === 0 && !showForm && (
+      {reviews.length === 0 && !formOpen && (
         <div style={{ color: "var(--text-muted)" }}>Henüz yorum yok.</div>
       )}
 
@@ -228,6 +247,18 @@ export function ReviewsList() {
                   {r.patientName}
                 </span>
                 <div style={{ display: "flex", gap: 8 }}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowForm(false);
+                      setEditing(r);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                    disabled={busyId === r.id || formOpen}
+                    style={{ padding: "7px 14px", fontSize: 13 }}
+                  >
+                    Düzenle
+                  </Button>
                   {r.consent_confirmed && (
                     <Button
                       variant="ghost"
